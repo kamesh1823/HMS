@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MediVault HMS — Intelligent Hospital Management</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <style>
+    :root {
+      --royal:#1B3A6B; --royal-deep:#0D2347; --royal-mid:#264F96;
+      --gold:#C9A84C; --gold-light:#E4C97E; --gold-pale:#FBF5E6;
+      --teal:#0E6B8C; --emerald:#2E7D52; --ivory:#FAF8F5;
+      --white:#FFFFFF; --slate:#6B7280; --navy:#0D1B2A; --platinum:#E8E4DC;
+    }
+    *{margin:0;padding:0;box-sizing:border-box;}
+    html{scroll-behavior:smooth;}
+    body{font-family:'Inter',sans-serif;color:var(--navy);background:var(--white);}
+
+    /* NAV */
+    nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(13,35,71,0.97);backdrop-filter:blur(12px);border-bottom:1px solid rgba(201,168,76,0.2);}
+    .nav-inner{max-width:1200px;margin:0 auto;padding:0 32px;height:70px;display:flex;align-items:center;justify-content:space-between;}
+    .nav-logo{display:flex;align-items:center;gap:12px;text-decoration:none;}
+    .nav-logo-icon{width:40px;height:40px;background:linear-gradient(135deg,var(--gold),var(--gold-light));border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--royal-deep);font-size:18px;}
+    .nav-logo-text span{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--white);display:block;line-height:1.1;}
+    .nav-logo-text small{font-size:9px;letter-spacing:2.5px;text-transform:uppercase;color:var(--gold-light);opacity:.8;}
+    .nav-links{display:flex;align-items:center;gap:8px;}
+    .nav-links a{color:rgba(255,255,255,0.8);text-decoration:none;padding:8px 16px;border-radius:8px;font-size:14px;font-weight:500;transition:all .2s;}
+    .nav-links a:hover{background:rgba(255,255,255,0.1);color:white;}
+    .nav-links .btn-login{background:var(--gold);color:var(--royal-deep);font-weight:700;padding:9px 22px;border-radius:9px;}
+    .nav-links .btn-login:hover{background:var(--gold-light);}
+    .nav-links .btn-present{border:1.5px solid rgba(201,168,76,0.6);color:var(--gold-light);padding:8px 18px;border-radius:9px;}
+    .nav-links .btn-present:hover{background:rgba(201,168,76,0.1);}
+
+    /* HERO */
+    .hero{min-height:100vh;background:linear-gradient(135deg,var(--royal-deep) 0%,var(--royal) 50%,var(--teal) 100%);display:flex;align-items:center;position:relative;overflow:hidden;padding-top:70px;}
+    .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 70% 50%,rgba(201,168,76,0.08),transparent 60%),radial-gradient(ellipse at 20% 80%,rgba(14,107,140,0.15),transparent 50%);}
+    .hero-grid{position:absolute;inset:0;opacity:.04;background-image:linear-gradient(rgba(255,255,255,0.8) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.8) 1px,transparent 1px);background-size:60px 60px;}
+    .hero-inner{max-width:1200px;margin:0 auto;padding:80px 32px;display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;position:relative;z-index:1;}
+    .hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.3);color:var(--gold-light);padding:6px 16px;border-radius:100px;font-size:12px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:20px;}
+    .hero h1{font-family:'Playfair Display',serif;font-size:54px;font-weight:700;color:var(--white);line-height:1.1;margin-bottom:20px;}
+    .hero h1 span{color:var(--gold-light);}
+    .hero p{font-size:18px;color:rgba(255,255,255,0.75);line-height:1.8;margin-bottom:36px;}
+    .hero-btns{display:flex;gap:16px;flex-wrap:wrap;}
+    .btn-primary{display:inline-flex;align-items:center;gap:10px;background:var(--gold);color:var(--royal-deep);padding:15px 30px;border-radius:12px;font-size:15px;font-weight:700;text-decoration:none;transition:all .25s;}
+    .btn-primary:hover{background:var(--gold-light);transform:translateY(-2px);box-shadow:0 8px 24px rgba(201,168,76,0.4);}
+    .btn-secondary{display:inline-flex;align-items:center;gap:10px;border:2px solid rgba(255,255,255,0.3);color:var(--white);padding:14px 28px;border-radius:12px;font-size:15px;font-weight:600;text-decoration:none;transition:all .25s;}
+    .btn-secondary:hover{background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.5);}
+    .hero-visual{display:flex;flex-direction:column;gap:16px;}
+    .hv-card{background:rgba(255,255,255,0.07);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.12);border-radius:16px;padding:20px 24px;display:flex;align-items:center;gap:16px;}
+    .hv-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+    .hv-title{font-size:14px;font-weight:600;color:var(--white);margin-bottom:3px;}
+    .hv-sub{font-size:12px;color:rgba(255,255,255,0.6);}
+    .hv-num{font-family:'Playfair Display',serif;font-size:28px;font-weight:700;color:var(--gold-light);}
+
+    /* STATS STRIP */
+    .stats-strip{background:var(--gold);padding:30px 0;}
+    .stats-inner{max-width:1200px;margin:0 auto;padding:0 32px;display:grid;grid-template-columns:repeat(4,1fr);gap:20px;text-align:center;}
+    .stat-num{font-family:'Playfair Display',serif;font-size:36px;font-weight:700;color:var(--royal-deep);}
+    .stat-label{font-size:13px;color:rgba(13,35,71,0.75);font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-top:4px;}
+
+    /* SECTIONS */
+    section{padding:90px 0;}
+    .section-inner{max-width:1200px;margin:0 auto;padding:0 32px;}
+    .section-tag{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--teal);font-weight:700;margin-bottom:12px;}
+    .section-title{font-family:'Playfair Display',serif;font-size:40px;font-weight:700;color:var(--royal-deep);margin-bottom:16px;line-height:1.2;}
+    .section-sub{font-size:17px;color:var(--slate);line-height:1.8;max-width:620px;}
+    .section-header{margin-bottom:56px;}
+    .section-header.center{text-align:center;}.section-header.center .section-sub{margin:0 auto;}
+
+    /* SERVICES */
+    .services{background:var(--ivory);}
+    .services-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:28px;}
+    .svc-card{background:var(--white);border-radius:20px;padding:32px;border:1px solid var(--platinum);transition:all .3s;position:relative;overflow:hidden;}
+    .svc-card::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;background:linear-gradient(180deg,var(--royal),var(--teal));opacity:0;transition:opacity .3s;}
+    .svc-card:hover{transform:translateY(-6px);box-shadow:0 20px 48px rgba(27,58,107,0.12);border-color:rgba(27,58,107,0.2);}
+    .svc-card:hover::before{opacity:1;}
+    .svc-icon{width:60px;height:60px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:20px;}
+    .svc-title{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--royal-deep);margin-bottom:10px;}
+    .svc-desc{font-size:14px;color:var(--slate);line-height:1.8;}
+
+    /* DOCTORS */
+    .doctors-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;}
+    .doc-card{background:var(--white);border-radius:20px;overflow:hidden;border:1px solid var(--platinum);transition:all .3s;text-align:center;}
+    .doc-card:hover{transform:translateY(-4px);box-shadow:0 16px 40px rgba(27,58,107,0.1);}
+    .doc-avatar{width:100%;height:160px;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:48px;font-weight:700;color:var(--white);}
+    .doc-info{padding:20px;}
+    .doc-name{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--royal-deep);margin-bottom:4px;}
+    .doc-spec{font-size:13px;color:var(--teal);font-weight:600;margin-bottom:8px;}
+    .doc-exp{font-size:12px;color:var(--slate);}
+
+    /* WHY */
+    .why{background:linear-gradient(135deg,var(--royal-deep),var(--royal));}
+    .why .section-tag{color:var(--gold-light);}
+    .why .section-title{color:var(--white);}
+    .why .section-sub{color:rgba(255,255,255,0.7);}
+    .why-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;}
+    .why-card{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:16px;padding:28px;transition:all .3s;}
+    .why-card:hover{background:rgba(255,255,255,0.11);}
+    .why-icon{font-size:28px;margin-bottom:14px;}
+    .why-title{font-size:16px;font-weight:700;color:var(--white);margin-bottom:8px;}
+    .why-desc{font-size:13px;color:rgba(255,255,255,0.65);line-height:1.8;}
+
+    /* APPOINTMENT BOOKING */
+    .booking{background:var(--ivory);}
+    .booking-wrap{background:var(--white);border-radius:24px;padding:48px;box-shadow:0 4px 40px rgba(27,58,107,0.08);border:1px solid var(--platinum);max-width:800px;margin:0 auto;}
+    .booking-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+    .fg{display:flex;flex-direction:column;gap:8px;}
+    .fg label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--royal);}
+    .fg input,.fg select,.fg textarea{padding:13px 16px;border:1.5px solid var(--platinum);border-radius:12px;font-family:'Inter',sans-serif;font-size:14px;color:var(--navy);background:var(--ivory);outline:none;transition:border .2s;}
+    .fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--royal);background:var(--white);}
+    .toggle-wrap{display:flex;gap:0;background:var(--ivory);border-radius:12px;padding:4px;margin-bottom:24px;border:1.5px solid var(--platinum);}
+    .toggle-btn{flex:1;padding:10px;border:none;background:transparent;border-radius:9px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;color:var(--slate);}
+    .toggle-btn.active{background:var(--royal);color:white;box-shadow:0 4px 12px rgba(27,58,107,0.25);}
+    .book-btn{width:100%;padding:16px;background:linear-gradient(135deg,var(--royal),var(--teal));color:white;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;transition:all .3s;margin-top:8px;}
+    .book-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(27,58,107,0.3);}
+
+    /* CONTACT */
+    .contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start;}
+    .contact-item{display:flex;gap:16px;margin-bottom:28px;}
+    .contact-icon{width:48px;height:48px;background:var(--ivory);border-radius:12px;display:flex;align-items:center;justify-content:center;color:var(--royal);font-size:18px;flex-shrink:0;}
+    .contact-label{font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--slate);font-weight:600;}
+    .contact-val{font-size:15px;font-weight:600;color:var(--navy);margin-top:3px;}
+
+    /* FOOTER */
+    footer{background:var(--royal-deep);color:rgba(255,255,255,0.6);text-align:center;padding:32px;font-size:13px;}
+    footer a{color:var(--gold-light);text-decoration:none;}
+
+    /* ALERT SUCCESS */
+    .appt-success{display:none;background:#ECFDF5;border:1.5px solid var(--emerald);border-radius:14px;padding:20px 24px;margin-top:16px;text-align:center;color:var(--emerald);font-weight:600;}
+
+    @media(max-width:768px){
+      .hero-inner,.booking-grid,.contact-grid,.services-grid,.doctors-grid,.why-grid{grid-template-columns:1fr;}
+      .hero h1{font-size:36px;}
+      .stats-inner{grid-template-columns:repeat(2,1fr);}
+      .nav-links .nav-link{display:none;}
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav>
+  <div class="nav-inner">
+    <a href="/" class="nav-logo">
+      <div class="nav-logo-icon"><i class="fas fa-shield-heart"></i></div>
+      <div class="nav-logo-text">
+        <span>MediVault</span>
+        <small>HMS Portal</small>
+      </div>
+    </a>
+    <div class="nav-links">
+      <a href="#services" class="nav-link">Services</a>
+      <a href="#doctors" class="nav-link">Doctors</a>
+      <a href="#booking" class="nav-link">Book Appointment</a>
+      <a href="#contact" class="nav-link">Contact</a>
+      <a href="/presentation" class="btn-present"><i class="fas fa-presentation-screen"></i> Research</a>
+      <a href="/auth/login" class="btn-login"><i class="fas fa-lock"></i> Staff Login</a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-inner">
+    <div>
+      <div class="hero-badge"><i class="fas fa-shield-halved"></i> AI-Powered Medical Security</div>
+      <h1>Advanced Healthcare with <span>Intelligent Protection</span></h1>
+      <p>MediVault combines world-class medical care with cutting-edge IoMT encryption. Your health data is protected by AI-driven chaotic cryptography — secure, private, and always accessible to your care team.</p>
+      <div class="hero-btns">
+        <a href="#booking" class="btn-primary"><i class="fas fa-calendar-plus"></i> Book Appointment</a>
+        <a href="#services" class="btn-secondary"><i class="fas fa-arrow-down"></i> Explore Services</a>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="hv-card">
+        <div class="hv-icon" style="background:rgba(201,168,76,0.2);color:var(--gold-light)"><i class="fas fa-hospital-user"></i></div>
+        <div><div class="hv-title">Patients Registered</div><div class="hv-sub">All records securely encrypted</div></div>
+        <div class="hv-num" style="margin-left:auto">500+</div>
+      </div>
+      <div class="hv-card">
+        <div class="hv-icon" style="background:rgba(46,125,82,0.2);color:#6EE7B7"><i class="fas fa-lock"></i></div>
+        <div><div class="hv-title">Encryption Rate</div><div class="hv-sub">CNN Autoencoder + Chaotic XOR</div></div>
+        <div class="hv-num" style="margin-left:auto">99.9%</div>
+      </div>
+      <div class="hv-card">
+        <div class="hv-icon" style="background:rgba(14,107,140,0.2);color:#67E8F9"><i class="fas fa-user-doctor"></i></div>
+        <div><div class="hv-title">Specialist Doctors</div><div class="hv-sub">Across 8 departments</div></div>
+        <div class="hv-num" style="margin-left:auto">10+</div>
+      </div>
+      <div class="hv-card">
+        <div class="hv-icon" style="background:rgba(124,58,237,0.2);color:#C4B5FD"><i class="fas fa-x-ray"></i></div>
+        <div><div class="hv-title">Scans Processed</div><div class="hv-sub">MRI, CT, X-Ray encrypted daily</div></div>
+        <div class="hv-num" style="margin-left:auto">1200+</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS STRIP -->
+<div class="stats-strip">
+  <div class="stats-inner">
+    <div><div class="stat-num">500+</div><div class="stat-label">Patients Served</div></div>
+    <div><div class="stat-num">99.9%</div><div class="stat-label">Encryption Coverage</div></div>
+    <div><div class="stat-num">10+</div><div class="stat-label">Specialist Doctors</div></div>
+    <div><div class="stat-num">24/7</div><div class="stat-label">Secure Access</div></div>
+  </div>
+</div>
+
+<!-- SERVICES -->
+<section class="services" id="services">
+  <div class="section-inner">
+    <div class="section-header">
+      <div class="section-tag">What We Offer</div>
+      <div class="section-title">Comprehensive Medical Services</div>
+      <div class="section-sub">From primary care to advanced diagnostics, our team provides exceptional healthcare with the highest standards of data security.</div>
+    </div>
+    <div class="services-grid">
+      {% set services = [
+        ('fas fa-heartbeat','#FEE2E2','#C0392B','Emergency Care','Round-the-clock emergency services with rapid response teams and advanced life-support equipment.'),
+        ('fas fa-brain','#EDE9FE','#6D28D9','Neurology','Expert diagnosis and treatment for brain, spine and nervous system disorders using advanced imaging.'),
+        ('fas fa-heart','#FCE7F3','#BE185D','Cardiology','Comprehensive cardiac care including diagnostics, interventional procedures, and cardiac rehabilitation.'),
+        ('fas fa-bone','#FFF8E6','#B45309','Orthopaedics','Joint replacements, fracture management and sports medicine by experienced orthopaedic surgeons.'),
+        ('fas fa-baby','#ECFDF5','#065F46','Paediatrics','Specialized care for children from newborns to adolescents in a comfortable, child-friendly environment.'),
+        ('fas fa-eye','#EEF2FF','#3730A3','Ophthalmology','Advanced eye care including cataract surgery, LASIK, retinal treatments and vision correction.'),
+        ('fas fa-lungs','#E0F2FE','#0369A1','Pulmonology','Diagnosis and treatment of respiratory conditions including asthma, COPD and sleep disorders.'),
+        ('fas fa-flask','#F0FDF4','#166534','Laboratory','AI-powered laboratory with encrypted result delivery, fast turnaround and comprehensive test panels.'),
+        ('fas fa-x-ray','#F5F3FF','#7C3AED','Radiology','State-of-the-art MRI, CT scan and X-ray services with encrypted image storage and secure access.'),
+      ] %}
+      {% for icon,bg,color,title,desc in services %}
+      <div class="svc-card">
+        <div class="svc-icon" style="background:{{bg}};color:{{color}}"><i class="{{icon}}"></i></div>
+        <div class="svc-title">{{title}}</div>
+        <div class="svc-desc">{{desc}}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- DOCTORS -->
+<section id="doctors">
+  <div class="section-inner">
+    <div class="section-header center">
+      <div class="section-tag">Our Specialists</div>
+      <div class="section-title">Meet Our Expert Doctors</div>
+      <div class="section-sub">Our team of board-certified specialists brings decades of combined experience to deliver exceptional patient outcomes.</div>
+    </div>
+    <div class="doctors-grid">
+      {% set doctors = [
+        ('Dr. Ananya Krishnan','Neurologist','15 yrs experience','#1B3A6B','A'),
+        ('Dr. Rajan Mehta','Cardiologist','18 yrs experience','#0E6B8C','R'),
+        ('Dr. Priya Suresh','Paediatrician','12 yrs experience','#2E7D52','P'),
+        ('Dr. Vikram Nair','Orthopaedic','20 yrs experience','#6D28D9','V'),
+      ] %}
+      {% for name,spec,exp,color,letter in doctors %}
+      <div class="doc-card">
+        <div class="doc-avatar" style="background:linear-gradient(135deg,{{color}},{{color}}cc)">{{letter}}</div>
+        <div class="doc-info">
+          <div class="doc-name">{{name}}</div>
+          <div class="doc-spec">{{spec}}</div>
+          <div class="doc-exp"><i class="fas fa-star" style="color:var(--gold)"></i> {{exp}}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- WHY MEDIVAULT -->
+<section class="why">
+  <div class="section-inner">
+    <div class="section-header">
+      <div class="section-tag">Why Choose Us</div>
+      <div class="section-title">Healthcare You Can Trust</div>
+      <div class="section-sub">We combine medical excellence with advanced technology to deliver secure, efficient and patient-centred care.</div>
+    </div>
+    <div class="why-grid">
+      {% set reasons = [
+        ('🔐','AI-Powered Encryption','Your medical scans are protected with CNN Autoencoder + Chaotic Logistic Map encryption. No password required — keys are derived automatically from your identity.'),
+        ('🏥','Complete HMS','End-to-end hospital management from patient registration to discharge — all under one roof with role-based access for every staff member.'),
+        ('📊','Real-Time Metrics','Live encryption quality metrics including PSNR, SSIM and Entropy scores ensure your data is always verifiably protected.'),
+        ('🔑','Automatic Key Derivation','SHA-256 based key generation from patient metadata means encryption keys are never stored — they are re-derived on every authorised access.'),
+        ('👁️','Full Audit Trail','Every action in the system is logged with user ID, timestamp and IP address — complete transparency and compliance.'),
+        ('📱','IoMT Ready','Designed for the Internet of Medical Things — compatible with modern medical devices, wearables and diagnostic equipment.'),
+      ] %}
+      {% for icon,title,desc in reasons %}
+      <div class="why-card">
+        <div class="why-icon">{{icon}}</div>
+        <div class="why-title">{{title}}</div>
+        <div class="why-desc">{{desc}}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- APPOINTMENT BOOKING -->
+<section class="booking" id="booking">
+  <div class="section-inner">
+    <div class="section-header center">
+      <div class="section-tag">Book Online</div>
+      <div class="section-title">Schedule Your Appointment</div>
+      <div class="section-sub">Book a consultation with our specialists in just a few clicks. We'll confirm your appointment promptly.</div>
+    </div>
+    <div class="booking-wrap">
+      <div class="toggle-wrap">
+        <button class="toggle-btn active" id="btn-new" onclick="switchType('new')">🧑 New Patient</button>
+        <button class="toggle-btn" id="btn-existing" onclick="switchType('existing')">🔄 Existing Patient</button>
+      </div>
+
+      <div id="form-new">
+        <div class="booking-grid">
+          <div class="fg"><label>Full Name *</label><input type="text" id="n-name" placeholder="John Smith"/></div>
+          <div class="fg"><label>Phone *</label><input type="tel" id="n-phone" placeholder="+91 XXXXX XXXXX"/></div>
+          <div class="fg"><label>Email</label><input type="email" id="n-email" placeholder="john@email.com"/></div>
+          <div class="fg"><label>Date of Birth</label><input type="date" id="n-dob"/></div>
+          <div class="fg"><label>Preferred Doctor</label>
+            <select id="n-doctor">
+              <option value="">Any available doctor</option>
+              <option>Dr. Ananya Krishnan – Neurologist</option>
+              <option>Dr. Rajan Mehta – Cardiologist</option>
+              <option>Dr. Priya Suresh – Paediatrician</option>
+              <option>Dr. Vikram Nair – Orthopaedic</option>
+            </select>
+          </div>
+          <div class="fg"><label>Appointment Date *</label><input type="date" id="n-date"/></div>
+          <div class="fg" style="grid-column:1/-1"><label>Reason for Visit *</label>
+            <textarea id="n-reason" rows="2" placeholder="Brief description of your symptoms or purpose of visit…"></textarea>
+          </div>
+        </div>
+        <button class="book-btn" onclick="submitBooking('new')"><i class="fas fa-calendar-check"></i> Book Appointment</button>
+      </div>
+
+      <div id="form-existing" style="display:none">
+        <div class="booking-grid">
+          <div class="fg"><label>Patient ID *</label><input type="text" id="e-pid" placeholder="e.g. MV-2024-0001"/></div>
+          <div class="fg"><label>Full Name *</label><input type="text" id="e-name" placeholder="Your full name"/></div>
+          <div class="fg"><label>Phone *</label><input type="tel" id="e-phone" placeholder="+91 XXXXX XXXXX"/></div>
+          <div class="fg"><label>Preferred Doctor</label>
+            <select id="e-doctor">
+              <option value="">Any available doctor</option>
+              <option>Dr. Ananya Krishnan – Neurologist</option>
+              <option>Dr. Rajan Mehta – Cardiologist</option>
+              <option>Dr. Priya Suresh – Paediatrician</option>
+              <option>Dr. Vikram Nair – Orthopaedic</option>
+            </select>
+          </div>
+          <div class="fg"><label>Appointment Date *</label><input type="date" id="e-date"/></div>
+          <div class="fg" style="grid-column:1/-1"><label>Reason for Visit *</label>
+            <textarea id="e-reason" rows="2" placeholder="Brief description of your purpose of visit…"></textarea>
+          </div>
+        </div>
+        <button class="book-btn" onclick="submitBooking('existing')"><i class="fas fa-calendar-check"></i> Book Appointment</button>
+      </div>
+
+      <div class="appt-success" id="appt-success">
+        <i class="fas fa-circle-check" style="font-size:28px;margin-bottom:8px;display:block"></i>
+        Appointment booked successfully! Our team will contact you shortly to confirm.<br>
+        <span id="wa-link-wrap" style="margin-top:10px;display:block"></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div class="section-inner">
+    <div class="section-header">
+      <div class="section-tag">Get In Touch</div>
+      <div class="section-title">Contact & Location</div>
+    </div>
+    <div class="contact-grid">
+      <div>
+        <div class="contact-item">
+          <div class="contact-icon"><i class="fas fa-location-dot"></i></div>
+          <div><div class="contact-label">Address</div><div class="contact-val">MediVault Hospital</div></div>
+        </div>
+        <div class="contact-item">
+          <div class="contact-icon"><i class="fas fa-phone"></i></div>
+          <div><div class="contact-label">Phone</div><div class="contact-val">+91 90001 90003</div></div>
+        </div>
+        <div class="contact-item">
+          <div class="contact-icon"><i class="fas fa-envelope"></i></div>
+          <div><div class="contact-label">Email</div><div class="contact-val">info@medivault.hospital</div></div>
+        </div>
+        <div class="contact-item">
+          <div class="contact-icon"><i class="fas fa-clock"></i></div>
+          <div><div class="contact-label">OPD Hours</div><div class="contact-val">Mon – Sat: 8:00 AM – 8:00 PM<br>Sunday: 9:00 AM – 1:00 PM (Emergency 24/7)</div></div>
+        </div>
+      </div>
+      <div style="background:linear-gradient(135deg,var(--royal-deep),var(--royal));border-radius:20px;padding:40px;color:white">
+        <div style="font-family:'Playfair Display',serif;font-size:24px;font-weight:700;margin-bottom:16px">Staff Portal Access</div>
+        <div style="font-size:14px;color:rgba(255,255,255,0.75);line-height:1.8;margin-bottom:28px">
+          Hospital staff can access the full Hospital Management System with role-based dashboards for admin, doctors, radiologists, receptionists, and lab technicians.
+        </div>
+        <a href="/auth/login" style="display:inline-flex;align-items:center;gap:10px;background:var(--gold);color:var(--royal-deep);padding:14px 28px;border-radius:12px;font-size:15px;font-weight:700;text-decoration:none">
+          <i class="fas fa-lock"></i> Login to HMS
+        </a>
+        <div style="margin-top:16px;font-size:12px;color:rgba(255,255,255,0.5)">Secured with AES-grade encryption & audit logging</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div style="margin-bottom:8px">
+    <strong style="color:var(--gold-light);font-family:'Playfair Display',serif">MediVault HMS</strong>
+    &nbsp;·&nbsp; <a href="/presentation">Research Details</a>
+    &nbsp;·&nbsp; <a href="/auth/login">Staff Login</a>
+    &nbsp;·&nbsp; <a href="#booking">Book Appointment</a>
+  </div>
+  <div>© 2024 MediVault Hospital Management System. Privacy-Preserving Medical Imaging with IoMT Encryption.</div>
+</footer>
+
+<script>
+let patientType = 'new';
+function switchType(t) {
+  patientType = t;
+  document.getElementById('form-new').style.display = t==='new'?'block':'none';
+  document.getElementById('form-existing').style.display = t==='existing'?'block':'none';
+  document.getElementById('btn-new').classList.toggle('active', t==='new');
+  document.getElementById('btn-existing').classList.toggle('active', t==='existing');
+  document.getElementById('appt-success').style.display = 'none';
+}
+
+async function submitBooking(type) {
+  let data = {};
+  if (type === 'new') {
+    const name = document.getElementById('n-name').value.trim();
+    const phone = document.getElementById('n-phone').value.trim();
+    const date = document.getElementById('n-date').value;
+    const reason = document.getElementById('n-reason').value.trim();
+    if (!name || !phone || !date || !reason) { alert('Please fill in all required fields.'); return; }
+    data = { patient_type:'new', patient_name:name, phone, email:document.getElementById('n-email').value,
+             date_of_birth:document.getElementById('n-dob').value,
+             preferred_doctor:document.getElementById('n-doctor').value,
+             appointment_date:date, reason };
+  } else {
+    const pid    = document.getElementById('e-pid').value.trim();
+    const name   = document.getElementById('e-name').value.trim();
+    const phone  = document.getElementById('e-phone').value.trim();
+    const date   = document.getElementById('e-date').value;
+    const reason = document.getElementById('e-reason').value.trim();
+    if (!pid || !name || !phone || !date || !reason) { alert('Please fill in all required fields.'); return; }
+
+    // Verify patient ID + name + phone match before booking
+    try {
+      const verifyRes = await fetch('/verify-patient', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({patient_id:pid, name, phone})
+      });
+      const verifyJson = await verifyRes.json();
+      if (!verifyJson.valid) {
+        alert('⚠ ' + verifyJson.message);
+        return;
+      }
+    } catch(e) { console.log('Verify skipped'); }
+
+    data = { patient_type:'existing', patient_id_ref:pid, patient_name:name, phone,
+             preferred_doctor:document.getElementById('e-doctor').value,
+             appointment_date:date, reason };
+  }
+
+  try {
+    const res = await fetch('/book-appointment', {
+      method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)
+    });
+    const json = await res.json();
+    if (json.success) {
+      // ── Clear all form fields ──────────────────────────────
+      if (type === 'new') {
+        ['n-name','n-phone','n-email','n-reason'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.value = '';
+        });
+        const dob = document.getElementById('n-dob');
+        const dt  = document.getElementById('n-date');
+        const dr  = document.getElementById('n-doctor');
+        if (dob) dob.value = '';
+        if (dt)  dt.value  = '';
+        if (dr)  dr.selectedIndex = 0;
+      } else {
+        ['e-pid','e-name','e-phone','e-reason'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.value = '';
+        });
+        const dt = document.getElementById('e-date');
+        const dr = document.getElementById('e-doctor');
+        if (dt) dt.value = '';
+        if (dr) dr.selectedIndex = 0;
+      }
+
+      // ── Show success banner ────────────────────────────────
+      document.getElementById('appt-success').style.display = 'block';
+      // Scroll to success message
+      document.getElementById('appt-success').scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+      if (json.whatsapp_link) {
+        document.getElementById('wa-link-wrap').innerHTML =
+          `<a href="${json.whatsapp_link}" target="_blank" style="display:inline-flex;align-items:center;gap:8px;background:#25D366;color:white;padding:10px 20px;border-radius:10px;text-decoration:none;font-weight:700;font-size:14px">
+            <i class="fab fa-whatsapp"></i> Notify via WhatsApp
+          </a>`;
+      }
+
+      // ── Auto-hide success after 8 seconds ─────────────────
+      setTimeout(() => {
+        document.getElementById('appt-success').style.display = 'none';
+        document.getElementById('wa-link-wrap').innerHTML = '';
+      }, 8000);
+    }
+  } catch(e) { alert('Booking failed. Please call us directly.'); }
+}
+
+// Set min date to today
+const today = new Date().toISOString().split('T')[0];
+['n-date','e-date'].forEach(id => { const el=document.getElementById(id); if(el) el.min=today; });
+</script>
+</body>
+</html>

@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block title %}Receptionist Dashboard — MediVault{% endblock %}
+{% block page_title %}Reception Desk{% endblock %}
+{% block page_subtitle %}Patient registration & appointment management{% endblock %}
+
+{% block sidebar_nav %}
+<div class="nav-section-label">Front Desk</div>
+<a href="/dashboard" class="nav-item active"><i class="fas fa-gauge-high"></i> Dashboard</a>
+<a href="/patients/new" class="nav-item"><i class="fas fa-user-plus"></i> Register Patient</a>
+<a href="/patients" class="nav-item"><i class="fas fa-hospital-user"></i> Patient List</a>
+<div class="nav-section-label">Appointments</div>
+<a href="/appointments" class="nav-item"><i class="fas fa-calendar-check"></i> All Appointments <span class="badge-count">{{ pending_appts }}</span></a>
+<a href="/staff/book-appointment" class="nav-item"><i class="fas fa-calendar-plus"></i> Book Appointment</a>
+<a href="/checkin" class="nav-item"><i class="fas fa-door-open"></i> Patient Check-in</a>
+<div class="nav-section-label">Admin</div>
+<a href="/billing" class="nav-item"><i class="fas fa-receipt"></i> Billing</a>
+<a href="/reports/upload" class="nav-item"><i class="fas fa-file-arrow-up"></i> Upload Report</a>
+{% endblock %}
+
+{% block content %}
+<div class="stat-cards">
+  <a href="/patients" class="stat-card" style="text-decoration:none;color:inherit">
+    <div class="sc-icon" style="background:#ECFDF5;color:var(--emerald)"><i class="fas fa-user-plus"></i></div>
+    <div><div class="sc-val">{{ stats.registered_today }}</div><div class="sc-label">Registered Today</div></div>
+  </a>
+  <a href="/appointments" class="stat-card" style="text-decoration:none;color:inherit">
+    <div class="sc-icon" style="background:#FFF8E6;color:var(--gold)"><i class="fas fa-calendar-check"></i></div>
+    <div><div class="sc-val">{{ stats.appointments_today }}</div><div class="sc-label">Appointments Today</div><div class="sc-change up">{{ pending_appts }} pending</div></div>
+  </a>
+  <a href="/checkin" class="stat-card" style="text-decoration:none;color:inherit">
+    <div class="sc-icon" style="background:#EEF2FF;color:var(--royal)"><i class="fas fa-door-open"></i></div>
+    <div><div class="sc-val">{{ stats.checked_in }}</div><div class="sc-label">Checked In Today</div></div>
+  </a>
+  <a href="/patients" class="stat-card" style="text-decoration:none;color:inherit">
+    <div class="sc-icon" style="background:#FEF3C7;color:#B45309"><i class="fas fa-hospital-user"></i></div>
+    <div><div class="sc-val">{{ stats.total_patients }}</div><div class="sc-label">Total Patients</div></div>
+  </a>
+</div>
+
+<div class="content-grid">
+  <!-- Pending Appointments -->
+  <div class="panel">
+    <div class="panel-header">
+      <div><h3>Pending Appointments</h3><p>Assign a doctor & confirm</p></div>
+      <a href="/appointments" class="btn btn-outline btn-sm">View All</a>
+    </div>
+    <div class="panel-body" style="padding:0">
+      <table class="data-table">
+        <thead><tr><th>Name</th><th>Date</th><th>Assign Doctor</th><th>Action</th></tr></thead>
+        <tbody>
+          {% for a in pending_appointments %}
+          <tr>
+            <td>
+              <strong>{{ a.patient_name }}</strong><br>
+              <small style="color:var(--slate)">{{ a.phone }} · {{ a.patient_type.title() }}</small>
+            </td>
+            <td style="font-size:12px;color:var(--slate)">{{ a.appointment_date }}</td>
+            <td>
+              <form method="POST" action="/appointments/{{ a.id }}/assign-doctor" style="display:flex;gap:6px">
+                <select name="doctor_id" style="padding:5px 8px;border:1.5px solid var(--platinum);border-radius:8px;font-size:12px;background:white;flex:1">
+                  <option value="">— Doctor —</option>
+                  {% for d in doctors %}
+                  <option value="{{ d.id }}" {% if a.assigned_doctor_id == d.id %}selected{% endif %}>Dr. {{ d.full_name }}</option>
+                  {% endfor %}
+                </select>
+                <button type="submit" class="btn btn-gold btn-sm" style="padding:5px 10px"><i class="fas fa-check"></i></button>
+              </form>
+            </td>
+            <td style="display:flex;gap:6px">
+              <a href="/appointments/{{ a.id }}/confirm" class="btn btn-outline btn-sm" title="Confirm"><i class="fas fa-check-circle"></i></a>
+              <a href="/appointments/{{ a.id }}" class="btn btn-outline btn-sm"><i class="fas fa-eye"></i></a>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="4" style="text-align:center;color:var(--slate);padding:32px">No pending appointments.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:24px">
+    <div class="panel">
+      <div class="panel-header"><div><h3>Quick Actions</h3></div></div>
+      <div class="panel-body">
+        <div class="quick-actions">
+          <a href="/patients/new" class="qa-card">
+            <div class="qa-icon" style="background:#ECFDF5;color:var(--emerald)"><i class="fas fa-user-plus"></i></div>
+            <div><div class="qa-label">Register</div><div class="qa-sub">New patient</div></div>
+          </a>
+          <a href="/staff/book-appointment" class="qa-card">
+            <div class="qa-icon" style="background:#EEF2FF;color:var(--royal)"><i class="fas fa-calendar-plus"></i></div>
+            <div><div class="qa-label">Book Appt</div><div class="qa-sub">Schedule visit</div></div>
+          </a>
+          <a href="/checkin" class="qa-card">
+            <div class="qa-icon" style="background:#FFF8E6;color:var(--gold)"><i class="fas fa-door-open"></i></div>
+            <div><div class="qa-label">Check-in</div><div class="qa-sub">Log arrival</div></div>
+          </a>
+          <a href="/billing" class="qa-card">
+            <div class="qa-icon" style="background:#FEF3C7;color:#B45309"><i class="fas fa-receipt"></i></div>
+            <div><div class="qa-label">Billing</div><div class="qa-sub">Payment entry</div></div>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Today's Check-ins -->
+    <div class="panel">
+      <div class="panel-header"><div><h3>Today's Check-ins</h3><p>Patients who arrived today</p></div><a href="/checkin" class="btn btn-outline btn-sm">Check-in</a></div>
+      <div class="panel-body">
+        {% for v in todays_checkins %}
+        <div class="activity-item">
+          <div class="act-dot" style="background:#ECFDF5;color:var(--emerald)"><i class="fas fa-circle-check"></i></div>
+          <div>
+            <div class="act-title">{{ v.patient.full_name if v.patient else '—' }}</div>
+            <div class="act-sub">{{ v.patient.patient_id if v.patient else '' }} · {{ v.reason or 'Walk-in' }}</div>
+          </div>
+          <div class="act-time">{{ v.visit_date.strftime('%I:%M %p') }}</div>
+        </div>
+        {% else %}
+        <p style="text-align:center;color:var(--slate);font-size:13px">No check-ins yet today.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

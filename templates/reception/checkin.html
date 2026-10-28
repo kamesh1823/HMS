@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block title %}Patient Check-in — MediVault{% endblock %}
+{% block page_title %}Patient Check-in{% endblock %}
+{% block page_subtitle %}Log patient arrival and assign to a doctor{% endblock %}
+
+{% block sidebar_nav %}
+<div class="nav-section-label">Front Desk</div>
+<a href="/dashboard"        class="nav-item"><i class="fas fa-gauge-high"></i> Dashboard</a>
+<a href="/patients/new"     class="nav-item"><i class="fas fa-user-plus"></i> Register Patient</a>
+<a href="/patients"         class="nav-item"><i class="fas fa-hospital-user"></i> Patient List</a>
+<div class="nav-section-label">Appointments</div>
+<a href="/appointments"     class="nav-item"><i class="fas fa-calendar-check"></i> All Appointments</a>
+<a href="/staff/book-appointment" class="nav-item"><i class="fas fa-calendar-plus"></i> Book Appointment</a>
+<a href="/checkin"          class="nav-item active"><i class="fas fa-door-open"></i> Patient Check-in</a>
+<div class="nav-section-label">Admin</div>
+<a href="/billing"          class="nav-item"><i class="fas fa-receipt"></i> Billing</a>
+<a href="/reports/upload"   class="nav-item"><i class="fas fa-file-arrow-up"></i> Upload Report</a>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.checkin-grid { display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+@media(max-width:768px){ .checkin-grid{ grid-template-columns:1fr; } }
+.form-panel { background:var(--white); border-radius:20px; padding:28px; border:1px solid var(--platinum); }
+.form-group { margin-bottom:18px; }
+.form-label { display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--royal); margin-bottom:8px; }
+.form-control {
+  width:100%; padding:11px 16px; border:1.5px solid var(--platinum); border-radius:10px;
+  font-family:'DM Sans',sans-serif; font-size:14px; color:var(--navy-text);
+  background:var(--ivory); outline:none; box-sizing:border-box;
+}
+.form-control:focus { border-color:var(--royal); background:white; }
+.visit-row { display:flex; align-items:center; gap:12px; padding:12px 16px; border-bottom:1px solid var(--platinum); }
+.visit-row:last-child { border-bottom:none; }
+.visit-badge { width:34px; height:34px; border-radius:10px; background:#EEF2FF; color:var(--royal); display:flex; align-items:center; justify-content:center; font-size:13px; flex-shrink:0; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="checkin-grid">
+
+  <!-- Check-in Form -->
+  <div class="form-panel">
+    <h3 style="font-family:'Playfair Display',serif;font-size:18px;color:var(--royal);margin-bottom:22px">
+      <i class="fas fa-door-open" style="margin-right:8px"></i>New Check-in
+    </h3>
+    <form method="POST">
+      <div class="form-group">
+        <label class="form-label"><i class="fas fa-user"></i> Patient *</label>
+        <select name="patient_id" class="form-control" required>
+          <option value="">— Search and select patient —</option>
+          {% for p in patients %}
+          <option value="{{ p.id }}">{{ p.patient_id }} — {{ p.full_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label"><i class="fas fa-user-doctor"></i> Assign Doctor</label>
+        <select name="doctor_id" class="form-control">
+          <option value="">— Any available doctor —</option>
+          {% for d in doctors %}
+          <option value="{{ d.id }}">Dr. {{ d.full_name }}{% if d.department %} ({{ d.department }}){% endif %}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label"><i class="fas fa-comment-medical"></i> Reason for Visit</label>
+        <textarea name="reason" class="form-control" rows="3" placeholder="e.g. Follow-up, Fever, Routine check-up…"></textarea>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width:100%;padding:13px;font-size:15px;font-weight:700">
+        <i class="fas fa-circle-check"></i> Check In Patient
+      </button>
+    </form>
+  </div>
+
+  <!-- Today's Check-ins -->
+  <div class="form-panel">
+    <h3 style="font-family:'Playfair Display',serif;font-size:18px;color:var(--royal);margin-bottom:22px">
+      <i class="fas fa-list-check" style="margin-right:8px"></i>Today's Check-ins
+      <span style="font-size:13px;font-family:'DM Sans',sans-serif;color:var(--slate);font-weight:400;margin-left:8px">{{ today_visits|length }} visits</span>
+    </h3>
+
+    {% if today_visits %}
+      {% for v in today_visits %}
+      <div class="visit-row">
+        <div class="visit-badge"><i class="fas fa-door-open"></i></div>
+        <div style="flex:1">
+          <div style="font-weight:600;font-size:14px;color:var(--navy-text)">{{ v.patient.full_name }}</div>
+          <div style="font-size:12px;color:var(--slate)">{{ v.reason or 'Walk-in' }}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:11px;color:var(--slate)">{{ v.visit_date.strftime('%I:%M %p') }}</div>
+          <span class="status-badge status-{% if v.status == 'active' %}active{% else %}discharged{% endif %}" style="font-size:10px">
+            {{ v.status.title() }}
+          </span>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div style="text-align:center;padding:40px;color:var(--slate)">
+        <i class="fas fa-door-open" style="font-size:32px;color:var(--platinum);display:block;margin-bottom:12px"></i>
+        No check-ins yet today.
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

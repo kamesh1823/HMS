@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}{{ patient.full_name }} — MediVault{% endblock %}
+{% block page_title %}{{ patient.full_name }}{% endblock %}
+{% block page_subtitle %}Patient ID: {{ patient.patient_id }} — Reception View{% endblock %}
+
+{% block sidebar_nav %}
+<div class="nav-section-label">Front Desk</div>
+<a href="/dashboard" class="nav-item"><i class="fas fa-gauge-high"></i> Dashboard</a>
+<a href="/patients" class="nav-item"><i class="fas fa-hospital-user"></i> Patient List</a>
+<a href="/patients/new" class="nav-item"><i class="fas fa-user-plus"></i> Register Patient</a>
+<a href="/appointments" class="nav-item"><i class="fas fa-calendar-check"></i> Appointments</a>
+{% endblock %}
+
+{% block content %}
+<div style="max-width:700px">
+  <div style="background:linear-gradient(135deg,var(--royal-deep),var(--royal));border-radius:20px;padding:28px;color:var(--white);margin-bottom:24px;display:flex;align-items:center;gap:20px">
+    <div style="width:72px;height:72px;border-radius:16px;background:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:28px;font-weight:700">
+      {{ patient.full_name[0].upper() }}
+    </div>
+    <div>
+      <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--gold-light)">{{ patient.patient_id }}</div>
+      <div style="font-family:'Playfair Display',serif;font-size:26px;font-weight:700;margin-top:4px">{{ patient.full_name }}</div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.7);margin-top:6px">{{ patient.gender or '—' }} · {{ patient.blood_group or '—' }} · {{ patient.date_of_birth.strftime('%d %b %Y') }}</div>
+    </div>
+    <div style="margin-left:auto;display:flex;gap:10px">
+      <a href="/patients/{{ patient.id }}/edit" class="btn btn-outline" style="border-color:rgba(255,255,255,0.3);color:var(--white)"><i class="fas fa-pen"></i> Edit</a>
+    </div>
+  </div>
+
+  <div style="background:var(--white);border-radius:16px;border:1px solid var(--platinum);padding:28px;margin-bottom:20px">
+    <h3 style="font-family:'Playfair Display',serif;color:var(--royal);margin-bottom:20px">Contact Details</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+      <div><div style="font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--slate)">Phone</div><div style="font-size:15px;font-weight:500;margin-top:4px">{{ patient.phone or '—' }}</div></div>
+      <div><div style="font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--slate)">Email</div><div style="font-size:15px;font-weight:500;margin-top:4px">{{ patient.email or '—' }}</div></div>
+      <div style="grid-column:1/-1"><div style="font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--slate)">Address</div><div style="font-size:15px;font-weight:500;margin-top:4px">{{ patient.address or '—' }}</div></div>
+      <div><div style="font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--slate)">Emergency Contact</div><div style="font-size:15px;font-weight:500;margin-top:4px">{{ patient.emergency_contact_name or '—' }}</div></div>
+      <div><div style="font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--slate)">Emergency Phone</div><div style="font-size:15px;font-weight:500;margin-top:4px">{{ patient.emergency_contact_phone or '—' }}</div></div>
+    </div>
+  </div>
+
+  <div style="background:var(--gold-pale);border:1px solid rgba(201,168,76,0.3);border-radius:12px;padding:16px 20px;display:flex;align-items:center;gap:12px">
+    <i class="fas fa-shield-halved" style="color:var(--gold);font-size:20px"></i>
+    <div>
+      <div style="font-weight:600;color:var(--royal);font-size:14px">Medical records restricted</div>
+      <div style="font-size:12px;color:var(--slate);margin-top:2px">Visit history, prescriptions, and encrypted scans are only accessible by doctors and administrators.</div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}Upload Lab Report — MediVault{% endblock %}
+{% block page_title %}Upload Lab Report{% endblock %}
+{% block page_subtitle %}Attach a laboratory report to a patient record{% endblock %}
+
+{% block sidebar_nav %}
+<div class="nav-section-label">Lab Reports</div>
+<a href="/dashboard" class="nav-item"><i class="fas fa-gauge-high"></i> Dashboard</a>
+<a href="/reports" class="nav-item"><i class="fas fa-file-medical"></i> All Reports</a>
+<a href="/reports/upload" class="nav-item active"><i class="fas fa-upload"></i> Upload Report</a>
+<a href="/patients" class="nav-item"><i class="fas fa-hospital-user"></i> Patients</a>
+{% endblock %}
+
+{% block content %}
+<div style="max-width:680px">
+  <div style="background:var(--white);border-radius:20px;padding:32px;box-shadow:0 2px 16px rgba(0,0,0,0.08)">
+    <form method="POST" enctype="multipart/form-data">
+
+      <!-- Patient -->
+      <div style="margin-bottom:20px">
+        <label style="display:block;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--royal);margin-bottom:8px">
+          <i class="fas fa-user"></i> Select Patient *
+        </label>
+        <select name="patient_id" id="patient_select" required onchange="loadVisits(this.value)"
+          style="width:100%;padding:13px 16px;border:2px solid var(--royal);border-radius:12px;font-size:14px;background:white;outline:none;box-shadow:0 0 0 3px rgba(27,58,107,0.1)">
+          <option value="">— Choose patient —</option>
+          {% for p in patients %}
+          <option value="{{ p.id }}">{{ p.patient_id }} — {{ p.full_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Report Type -->
+      <div style="margin-bottom:20px">
+        <label style="display:block;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--royal);margin-bottom:8px">
+          <i class="fas fa-flask"></i> Report Type *
+        </label>
+        <select name="report_type" required
+          style="width:100%;padding:13px 16px;border:1.5px solid var(--platinum);border-radius:12px;font-size:14px;background:white;outline:none">
+          <option value="General">General</option>
+          <option value="Blood">Blood Report (CBC / Lipid / Sugar)</option>
+          <option value="Urine">Urine Analysis</option>
+          <option value="Imaging">Imaging Report</option>
+          <option value="Microbiology">Microbiology / Culture</option>
+          <option value="Pathology">Pathology / Biopsy</option>
+          <option value="Thyroid">Thyroid Function</option>
+          <option value="Liver">Liver Function (LFT)</option>
+          <option value="Kidney">Kidney Function (KFT)</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+
+      <!-- Visit (optional) -->
+      <div style="margin-bottom:20px">
+        <label style="display:block;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--royal);margin-bottom:8px">
+          <i class="fas fa-stethoscope"></i> Link to Visit (optional)
+        </label>
+        <select name="visit_id" id="visit_select"
+          style="width:100%;padding:13px 16px;border:1.5px solid var(--platinum);border-radius:12px;font-size:14px;background:white;outline:none">
+          <option value="">— Select patient first —</option>
+        </select>
+      </div>
+
+      <!-- Report Name -->
+      <div style="margin-bottom:20px">
+        <label style="display:block;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--royal);margin-bottom:8px">
+          <i class="fas fa-tag"></i> Report Name *
+        </label>
+        <input type="text" name="report_name" required placeholder="e.g. Blood CBC Report, Chest X-Ray Result"
+          style="width:100%;padding:13px 16px;border:1.5px solid var(--platinum);border-radius:12px;font-size:14px;outline:none;transition:border .2s"
+          onfocus="this.style.borderColor='var(--royal)'" onblur="this.style.borderColor='var(--platinum)'">
+      </div>
+
+      <!-- Notes -->
+      <div style="margin-bottom:20px">
+        <label style="display:block;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--royal);margin-bottom:8px">
+          <i class="fas fa-note-sticky"></i> Notes (optional)
+        </label>
+        <textarea name="notes" rows="2" placeholder="Additional observations or remarks…"
+          style="width:100%;padding:13px 16px;border:1.5px solid var(--platinum);border-radius:12px;font-size:14px;outline:none;resize:vertical;transition:border .2s"
+          onfocus="this.style.borderColor='var(--royal)'" onblur="this.style.borderColor='var(--platinum)'"></textarea>
+      </div>
+
+      <!-- File upload -->
+      <div style="margin-bottom:28px">
+        <label style="display:block;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--royal);margin-bottom:8px">
+          <i class="fas fa-paperclip"></i> Report File *
+        </label>
+        <div id="drop-zone" style="border:2.5px dashed var(--royal);border-radius:14px;padding:36px;text-align:center;cursor:pointer;background:rgba(27,58,107,0.03);transition:all .2s"
+          onclick="document.getElementById('file_input').click()"
+          onmouseover="this.style.background='rgba(27,58,107,0.06)'"
+          onmouseout="this.style.background='rgba(27,58,107,0.03)'">
+          <div style="font-size:36px;color:var(--royal);opacity:0.5;margin-bottom:10px"><i class="fas fa-cloud-upload-alt"></i></div>
+          <div style="font-weight:700;color:var(--navy-text);margin-bottom:4px">Click to select or drop file here</div>
+          <div style="font-size:12px;color:var(--slate)">Supports PNG, JPG, PDF, BMP (max 16MB)</div>
+          <div id="file-name" style="margin-top:12px;font-size:14px;color:var(--emerald);font-weight:700;display:none"></div>
+        </div>
+        <input type="file" id="file_input" name="report_file" accept=".png,.jpg,.jpeg,.pdf,.bmp" required style="display:none"
+          onchange="document.getElementById('file-name').textContent='✓ '+this.files[0].name;document.getElementById('file-name').style.display='block'">
+      </div>
+
+      <div style="display:flex;gap:12px">
+        <button type="submit" style="flex:1;padding:14px;background:linear-gradient(135deg,var(--royal),var(--teal));color:white;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer">
+          <i class="fas fa-upload"></i> Upload Report
+        </button>
+        <a href="/reports" style="padding:14px 20px;background:var(--platinum);color:var(--navy-text);border-radius:12px;text-decoration:none;font-weight:600">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function loadVisits(patientId) {
+  const sel = document.getElementById('visit_select');
+  if (!patientId) { sel.innerHTML='<option value="">— Select patient first —</option>'; return; }
+  sel.innerHTML = '<option value="">Loading visits…</option>';
+  fetch(`/patients/${patientId}/visits-json`)
+    .then(r => r.json())
+    .then(visits => {
+      sel.innerHTML = '<option value="">— No specific visit (general report) —</option>';
+      visits.forEach(v => { sel.innerHTML += `<option value="${v.id}">${v.date} — ${v.reason}</option>`; });
+    }).catch(() => { sel.innerHTML='<option value="">— Could not load visits —</option>'; });
+}
+</script>
+{% endblock %}

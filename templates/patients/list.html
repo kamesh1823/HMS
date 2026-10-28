@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% block title %}Patients — MediVault{% endblock %}
+{% block page_title %}Patient Records{% endblock %}
+{% block page_subtitle %}All registered patients in the system{% endblock %}
+
+{% block sidebar_nav %}
+<div class="nav-section-label">Patients</div>
+<a href="/dashboard"    class="nav-item"><i class="fas fa-gauge-high"></i> Dashboard</a>
+<a href="/patients"     class="nav-item active"><i class="fas fa-hospital-user"></i> All Patients</a>
+<a href="/patients/new" class="nav-item"><i class="fas fa-user-plus"></i> Register Patient</a>
+<a href="/appointments" class="nav-item"><i class="fas fa-calendar-check"></i> Appointments</a>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.search-bar {
+  display:flex; gap:12px; margin-bottom:20px; align-items:center;
+  background:var(--white); padding:16px 20px; border-radius:14px;
+  border:1px solid var(--platinum);
+}
+.search-bar input[type=text] {
+  flex:1; padding:9px 14px; border:1.5px solid var(--platinum); border-radius:10px;
+  background:var(--ivory); font-family:'DM Sans',sans-serif; font-size:13px;
+  color:var(--navy-text); outline:none;
+}
+.search-bar input[type=text]:focus { border-color:var(--royal); }
+.patient-table-wrap { background:var(--white); border-radius:16px; border:1px solid var(--platinum); overflow:hidden; }
+.patient-table-header { padding:18px 24px; border-bottom:1px solid var(--platinum); display:flex; align-items:center; justify-content:space-between; background:var(--ivory); }
+.patient-table-header h3 { font-family:'Playfair Display',serif; font-size:17px; font-weight:600; color:var(--royal); }
+.empty-state { text-align:center; padding:60px; color:var(--slate); }
+.empty-state i { font-size:40px; color:var(--platinum); margin-bottom:14px; display:block; }
+.stat-pills { display:flex; gap:12px; margin-bottom:20px; flex-wrap:wrap; }
+.stat-pill {
+  background:var(--white); border:1px solid var(--platinum); border-radius:12px;
+  padding:14px 20px; display:flex; align-items:center; gap:12px; flex:1; min-width:140px;
+}
+.sp-icon { width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:15px; flex-shrink:0; }
+.sp-val  { font-family:'Playfair Display',serif; font-size:24px; font-weight:700; color:var(--royal); line-height:1; }
+.sp-lbl  { font-size:11px; color:var(--slate); margin-top:2px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="stat-pills">
+  <div class="stat-pill">
+    <div class="sp-icon" style="background:#EEF2FF;color:var(--royal)"><i class="fas fa-hospital-user"></i></div>
+    <div><div class="sp-val">{{ patients.total }}</div><div class="sp-lbl">Total Patients</div></div>
+  </div>
+  <div class="stat-pill">
+    <div class="sp-icon" style="background:#ECFDF5;color:var(--emerald)"><i class="fas fa-user-plus"></i></div>
+    <div><div class="sp-val">{{ new_today }}</div><div class="sp-lbl">Registered Today</div></div>
+  </div>
+</div>
+
+<form method="GET" class="search-bar">
+  <i class="fas fa-search" style="color:var(--slate);font-size:14px"></i>
+  <input type="text" name="q" value="{{ search }}" placeholder="Search by name, patient ID, or phone…"/>
+  <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-search"></i> Search</button>
+  {% if search %}
+  <a href="/patients" class="btn btn-outline btn-sm"><i class="fas fa-times"></i> Clear</a>
+  {% endif %}
+  {% if current_user.role in ['admin', 'receptionist'] %}
+  <a href="/patients/new" class="btn btn-gold btn-sm" style="margin-left:auto"><i class="fas fa-user-plus"></i> New Patient</a>
+  {% endif %}
+</form>
+
+<div class="patient-table-wrap">
+  <div class="patient-table-header">
+    <h3><i class="fas fa-hospital-user" style="color:var(--royal);margin-right:10px"></i>All Patients</h3>
+    <span style="font-size:13px;color:var(--slate)">
+      {{ patients.total }} patient{{ 's' if patients.total != 1 }}{% if search %} matching "{{ search }}"{% endif %}
+    </span>
+  </div>
+
+  {% if patients.items %}
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Patient ID</th>
+        <th>Name</th>
+        <th>Gender / DOB</th>
+        <th>Blood Group</th>
+        <th>Phone</th>
+        <th>Registered</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in patients.items %}
+      <tr>
+        <td><code style="font-size:12px;background:var(--ivory);padding:3px 8px;border-radius:6px">{{ p.patient_id }}</code></td>
+        <td>
+          <strong>{{ p.full_name }}</strong>
+          {% if p.allergies %}<span title="Has allergies" style="color:#EF4444;font-size:11px;margin-left:4px"><i class="fas fa-triangle-exclamation"></i></span>{% endif %}
+        </td>
+        <td style="font-size:13px">
+          {{ p.gender or '—' }}<br>
+          <small style="color:var(--slate)">{{ p.date_of_birth.strftime('%d %b %Y') if p.date_of_birth else '—' }}</small>
+        </td>
+        <td>
+          {% if p.blood_group %}
+          <span style="background:#FEE2E2;color:#991B1B;padding:3px 10px;border-radius:100px;font-size:12px;font-weight:600">{{ p.blood_group }}</span>
+          {% else %}—{% endif %}
+        </td>
+        <td style="font-size:13px">{{ p.phone or '—' }}</td>
+        <td style="font-size:12px;color:var(--slate)">{{ p.created_at.strftime('%d %b %Y') }}</td>
+        <td>
+          <div style="display:flex;gap:6px">
+            <a href="/patients/{{ p.id }}" class="btn btn-outline btn-sm" title="View Profile"><i class="fas fa-eye"></i></a>
+            {% if current_user.role in ['admin', 'receptionist'] %}
+            <a href="/patients/{{ p.id }}/edit" class="btn btn-gold btn-sm" title="Edit"><i class="fas fa-pen"></i></a>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if patients.pages > 1 %}
+  <div style="padding:16px 24px;border-top:1px solid var(--platinum);display:flex;gap:8px;align-items:center">
+    {% if patients.has_prev %}
+    <a href="?page={{ patients.prev_num }}{% if search %}&q={{ search }}{% endif %}" class="btn btn-outline btn-sm"><i class="fas fa-chevron-left"></i></a>
+    {% endif %}
+    <span style="font-size:13px;color:var(--slate);padding:4px 8px">Page {{ patients.page }} of {{ patients.pages }}</span>
+    {% if patients.has_next %}
+    <a href="?page={{ patients.next_num }}{% if search %}&q={{ search }}{% endif %}" class="btn btn-outline btn-sm"><i class="fas fa-chevron-right"></i></a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="empty-state">
+    <i class="fas fa-hospital-user"></i>
+    <h3 style="font-family:'Playfair Display',serif;color:var(--royal);margin-bottom:8px">
+      {% if search %}No patients found{% else %}No patients registered yet{% endif %}
+    </h3>
+    <p>
+      {% if search %}
+        No results for "{{ search }}". <a href="/patients">View all patients</a>
+      {% else %}
+        Patients registered from the system will appear here.
+        {% if current_user.role in ['admin', 'receptionist'] %}
+        <br><a href="/patients/new" class="btn btn-gold btn-sm" style="margin-top:16px;display:inline-block"><i class="fas fa-user-plus"></i> Register First Patient</a>
+        {% endif %}
+      {% endif %}
+    </p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

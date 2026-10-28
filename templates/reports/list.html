@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Lab Reports — MediVault{% endblock %}
+{% block page_title %}Lab Reports{% endblock %}
+{% block page_subtitle %}All uploaded laboratory reports{% endblock %}
+
+{% block sidebar_nav %}
+<div class="nav-section-label">Lab Reports</div>
+<a href="/dashboard" class="nav-item"><i class="fas fa-gauge-high"></i> Dashboard</a>
+<a href="/reports" class="nav-item active"><i class="fas fa-file-medical"></i> All Reports</a>
+<a href="/reports/upload" class="nav-item"><i class="fas fa-upload"></i> Upload Report</a>
+<a href="/patients" class="nav-item"><i class="fas fa-users"></i> Patients</a>
+{% endblock %}
+
+{% block content %}
+<div style="background:var(--white);border-radius:20px;overflow:hidden;box-shadow:0 2px 16px rgba(0,0,0,0.08)">
+  <div style="padding:20px 24px;border-bottom:1px solid var(--platinum);display:flex;align-items:center;justify-content:space-between">
+    <div style="font-size:16px;font-weight:600;color:var(--navy-text)">
+      <i class="fas fa-file-waveform" style="color:var(--royal);margin-right:8px"></i>Lab Report Archive
+    </div>
+    <a href="/reports/upload" style="padding:8px 18px;background:var(--royal);color:white;border-radius:10px;text-decoration:none;font-size:13px;font-weight:600">
+      <i class="fas fa-plus"></i> Upload Report
+    </a>
+  </div>
+
+  {% if reports.items %}
+  <table style="width:100%;border-collapse:collapse">
+    <thead>
+      <tr style="background:#F8F7F4">
+        <th style="padding:14px 20px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--slate)">#</th>
+        <th style="padding:14px 20px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--slate)">Report Name</th>
+        <th style="padding:14px 20px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--slate)">Visit</th>
+        <th style="padding:14px 20px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--slate)">Uploaded</th>
+        <th style="padding:14px 20px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--slate)">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in reports.items %}
+      <tr style="border-top:1px solid var(--platinum)">
+        <td style="padding:14px 20px;font-size:13px;color:var(--slate)">{{ r.id }}</td>
+        <td style="padding:14px 20px">
+          <div style="font-weight:600;color:var(--navy-text)">{{ r.report_name }}</div>
+          <div style="font-size:11px;color:var(--slate);margin-top:2px">
+            {% set ext = r.file_path.rsplit('.',1)[-1].upper() %}
+            <span style="background:{% if ext=='PDF' %}#FFEAA7{% else %}#DFF9FB{% endif %};color:#2d3436;padding:2px 8px;border-radius:4px;font-weight:700">{{ ext }}</span>
+          </div>
+        </td>
+        <td style="padding:14px 20px;font-size:13px;color:var(--slate)">
+          {% if r.visit_id %}Visit #{{ r.visit_id }}{% else %}—{% endif %}
+        </td>
+        <td style="padding:14px 20px;font-size:13px;color:var(--slate)">
+          {{ r.uploaded_at.strftime('%d %b %Y, %I:%M %p') }}
+        </td>
+        <td style="padding:14px 20px">
+          <a href="/reports/{{ r.id }}/download" style="padding:6px 14px;background:var(--royal);color:white;border-radius:8px;font-size:12px;text-decoration:none">
+            <i class="fas fa-download"></i> Download
+          </a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if reports.pages > 1 %}
+  <div style="padding:16px 24px;border-top:1px solid var(--platinum);display:flex;gap:8px;justify-content:center">
+    {% for page in reports.iter_pages() %}
+      {% if page %}
+      <a href="?page={{ page }}" style="padding:8px 14px;border-radius:8px;font-size:13px;text-decoration:none;{% if page == reports.page %}background:var(--royal);color:white{% else %}background:var(--platinum);color:var(--navy-text){% endif %}">{{ page }}</a>
+      {% else %}<span style="padding:8px 6px;color:var(--slate)">…</span>{% endif %}
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div style="padding:60px;text-align:center;color:var(--slate)">
+    <i class="fas fa-file-circle-xmark" style="font-size:48px;opacity:.3;display:block;margin-bottom:16px"></i>
+    <div style="font-size:16px;font-weight:600;margin-bottom:8px">No reports uploaded yet</div>
+    <a href="/reports/upload" style="display:inline-block;margin-top:8px;padding:10px 24px;background:var(--royal);color:white;border-radius:10px;text-decoration:none;font-weight:600">Upload First Report</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

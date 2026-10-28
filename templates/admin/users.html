@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block title %}Staff Management — MediVault{% endblock %}
+{% block page_title %}Staff Management{% endblock %}
+{% block page_subtitle %}Manage all hospital system users{% endblock %}
+
+{% block sidebar_nav %}
+<div class="nav-section-label">Admin</div>
+<a href="/dashboard"    class="nav-item"><i class="fas fa-gauge-high"></i> Dashboard</a>
+<a href="/admin/users"  class="nav-item active"><i class="fas fa-users-gear"></i> Staff Users</a>
+<a href="/audit-log"    class="nav-item"><i class="fas fa-shield-halved"></i> Audit Log</a>
+<a href="/patients"     class="nav-item"><i class="fas fa-hospital-user"></i> Patients</a>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.role-tag { padding:4px 12px; border-radius:100px; font-size:11px; font-weight:600; letter-spacing:0.5px; }
+.role-admin        { background:rgba(201,168,76,0.15); color:#7C5A1E; }
+.role-doctor       { background:#EFF6FF; color:#1D4ED8; }
+.role-radiologist  { background:#F3E8FF; color:#6D28D9; }
+.role-receptionist { background:#ECFDF5; color:#065F46; }
+.role-lab          { background:#FFF1F2; color:#9F1239; }
+.role-patient      { background:#FFF7ED; color:#C2410C; }
+.modal-overlay { display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center; }
+.modal-overlay.open { display:flex; }
+.modal-box { background:white;border-radius:18px;padding:28px;max-width:380px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.25); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;gap:12px;flex-wrap:wrap">
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <a href="/admin/users"                   class="btn btn-sm {% if not role_filter %}btn-primary{% else %}btn-outline{% endif %}">All</a>
+    <a href="/admin/users?role=admin"        class="btn btn-sm {% if role_filter=='admin' %}btn-primary{% else %}btn-outline{% endif %}">Admin</a>
+    <a href="/admin/users?role=doctor"       class="btn btn-sm {% if role_filter=='doctor' %}btn-primary{% else %}btn-outline{% endif %}">Doctors</a>
+    <a href="/admin/users?role=radiologist"  class="btn btn-sm {% if role_filter=='radiologist' %}btn-primary{% else %}btn-outline{% endif %}">Radiologists</a>
+    <a href="/admin/users?role=receptionist" class="btn btn-sm {% if role_filter=='receptionist' %}btn-primary{% else %}btn-outline{% endif %}">Receptionists</a>
+    <a href="/admin/users?role=lab"          class="btn btn-sm {% if role_filter=='lab' %}btn-primary{% else %}btn-outline{% endif %}">Lab</a>
+    <a href="/admin/users?role=patient"      class="btn btn-sm {% if role_filter=='patient' %}btn-primary{% else %}btn-outline{% endif %}">Patients</a>
+  </div>
+  <a href="/admin/users/new" class="btn btn-gold"><i class="fas fa-user-plus"></i> Add Staff User</a>
+</div>
+
+<div style="background:var(--white);border-radius:16px;border:1px solid var(--platinum);overflow:hidden">
+  <div style="padding:18px 24px;border-bottom:1px solid var(--platinum);background:var(--ivory);display:flex;align-items:center;justify-content:space-between">
+    <h3 style="font-family:'Playfair Display',serif;font-size:17px;font-weight:600;color:var(--royal)">All Accounts</h3>
+    <span style="font-size:13px;color:var(--slate)">{{ users|length }} users</span>
+  </div>
+  <table class="data-table">
+    <thead>
+      <tr><th>Name</th><th>Email</th><th>Role</th><th>Department</th><th>Phone</th><th>Status</th><th>Actions</th></tr>
+    </thead>
+    <tbody>
+      {% for u in users %}
+      <tr>
+        <td>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,var(--royal),var(--teal));display:flex;align-items:center;justify-content:center;color:var(--white);font-weight:700;font-size:14px;flex-shrink:0">
+              {{ u.full_name[0].upper() }}
+            </div>
+            <strong>{{ u.full_name }}</strong>
+          </div>
+        </td>
+        <td style="font-size:13px">{{ u.email }}</td>
+        <td><span class="role-tag role-{{ u.role }}">{{ u.role.title() }}</span></td>
+        <td style="font-size:13px;color:var(--slate)">{{ u.department or '—' }}</td>
+        <td style="font-size:13px;color:var(--slate)">{{ u.phone or '—' }}</td>
+        <td>
+          {% if u.is_active %}
+            <span class="status-badge status-active">Active</span>
+          {% else %}
+            <span class="status-badge" style="background:#FEE2E2;color:#991B1B">Inactive</span>
+          {% endif %}
+        </td>
+        <td>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            {% if u.id != current_user.id %}
+            <a href="/admin/users/{{ u.id }}/toggle"
+               class="btn {% if u.is_active %}btn-danger{% else %}btn-gold{% endif %} btn-sm">
+              <i class="fas fa-{% if u.is_active %}ban{% else %}check{% endif %}"></i>
+              {{ 'Deactivate' if u.is_active else 'Activate' }}
+            </a>
+            {% else %}
+            <span style="font-size:12px;color:var(--slate);padding:4px 8px">(You)</span>
+            {% endif %}
+            <button type="button" onclick="openReset({{ u.id }}, '{{ u.full_name }}')"
+              class="btn btn-outline btn-sm" title="Reset Password">
+              <i class="fas fa-key"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Reset Password Modal -->
+<div class="modal-overlay" id="reset-modal">
+  <div class="modal-box">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+      <div style="width:42px;height:42px;border-radius:11px;background:#FFF8E6;color:var(--gold);display:flex;align-items:center;justify-content:center;font-size:17px">
+        <i class="fas fa-key"></i>
+      </div>
+      <div>
+        <div style="font-family:'Playfair Display',serif;font-size:17px;font-weight:700;color:var(--royal)">Reset Password</div>
+        <div style="font-size:12px;color:var(--slate)" id="reset-name">—</div>
+      </div>
+    </div>
+    <form method="POST" id="reset-form" action="">
+      <div style="margin-bottom:16px">
+        <label style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--royal);margin-bottom:8px">New Password</label>
+        <input type="password" name="new_password" required minlength="6" placeholder="Min 6 characters"
+          style="width:100%;padding:11px 14px;border:1.5px solid var(--platinum);border-radius:10px;font-size:14px;outline:none;box-sizing:border-box">
+      </div>
+      <div style="display:flex;gap:10px">
+        <button type="submit" class="btn btn-gold" style="flex:1;padding:12px;font-size:14px;font-weight:700">
+          <i class="fas fa-check"></i> Reset Password
+        </button>
+        <button type="button" onclick="document.getElementById('reset-modal').classList.remove('open')"
+          style="padding:12px 16px;border:1.5px solid var(--platinum);background:white;border-radius:10px;cursor:pointer;font-size:14px;color:var(--slate)">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function openReset(userId, name) {
+  document.getElementById('reset-name').textContent = name;
+  document.getElementById('reset-form').action = '/admin/users/' + userId + '/reset-password';
+  document.getElementById('reset-modal').classList.add('open');
+}
+</script>
+{% endblock %}

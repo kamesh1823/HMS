@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Audit Log — MediVault{% endblock %}
+{% block page_title %}Security Audit Log{% endblock %}
+{% block page_subtitle %}Every system access, action, and event recorded{% endblock %}
+
+{% block sidebar_nav %}
+<div class="nav-section-label">Security</div>
+<a href="/dashboard"  class="nav-item"><i class="fas fa-gauge-high"></i> Dashboard</a>
+<a href="/audit-log"  class="nav-item active"><i class="fas fa-shield-halved"></i> Audit Log</a>
+<a href="/admin/users" class="nav-item"><i class="fas fa-users-gear"></i> Staff Users</a>
+<a href="/metrics"    class="nav-item"><i class="fas fa-chart-line"></i> Metrics</a>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.log-wrap { background:var(--white); border-radius:16px; border:1px solid var(--platinum); overflow:hidden; }
+.log-header { padding:18px 24px; border-bottom:1px solid var(--platinum); background:var(--ivory); display:flex; align-items:center; justify-content:space-between; }
+.log-header h3 { font-family:'Playfair Display',serif; font-size:17px; font-weight:600; color:var(--royal); }
+
+.action-icon { width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:12px; flex-shrink:0; }
+
+.log-row { display:flex; align-items:center; gap:14px; padding:14px 22px; border-bottom:1px solid var(--platinum); transition:background 0.15s; }
+.log-row:last-child { border-bottom:none; }
+.log-row:hover { background:var(--ivory); }
+.log-action { font-size:13px; font-weight:600; color:var(--navy-text); }
+.log-target { font-size:12px; color:var(--slate); margin-top:2px; }
+.log-meta   { margin-left:auto; text-align:right; font-size:11px; color:var(--slate); flex-shrink:0; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="log-wrap">
+  <div class="log-header">
+    <h3><i class="fas fa-shield-halved" style="color:var(--royal);margin-right:10px"></i>Audit Trail</h3>
+    <span style="font-size:13px;color:var(--slate)">{{ logs.total }} total events</span>
+  </div>
+
+  {% for log in logs.items %}
+  {% set user = log.user_id %}
+  <div class="log-row">
+    <div class="action-icon" style="
+      {% if 'view' in log.action.lower() %}background:#EEF2FF;color:var(--royal)
+      {% elif 'upload' in log.action.lower() or 'created' in log.action.lower() or 'register' in log.action.lower() %}background:#ECFDF5;color:var(--emerald)
+      {% elif 'login' in log.action.lower() %}background:#FFF8E6;color:#B45309
+      {% elif 'decrypt' in log.action.lower() or 'download' in log.action.lower() %}background:#EDE9FE;color:#6D28D9
+      {% elif 'cancel' in log.action.lower() or 'delete' in log.action.lower() %}background:#FEE2E2;color:var(--rose)
+      {% else %}background:var(--ivory);color:var(--slate){% endif %}
+    ">
+      <i class="fas fa-
+        {% if 'view' in log.action.lower() %}eye
+        {% elif 'upload' in log.action.lower() %}upload
+        {% elif 'register' in log.action.lower() or 'created' in log.action.lower() %}user-plus
+        {% elif 'decrypt' in log.action.lower() %}unlock
+        {% elif 'download' in log.action.lower() %}download
+        {% elif 'cancel' in log.action.lower() %}ban
+        {% elif 'confirm' in log.action.lower() %}check
+        {% else %}circle-dot{% endif %}
+      "></i>
+    </div>
+    <div>
+      <div class="log-action">{{ log.action }}</div>
+      <div class="log-target">{{ log.target }}</div>
+    </div>
+    <div class="log-meta">
+      <div style="font-size:12px;color:var(--navy-text);font-weight:500">
+        {{ users.get(log.user_id, 'User #' ~ log.user_id) }}
+      </div>
+      <div>{{ log.ip_address or '—' }}</div>
+      <div>{{ log.timestamp.strftime('%d %b %Y, %H:%M:%S') }}</div>
+    </div>
+  </div>
+  {% else %}
+  <div style="padding:60px;text-align:center;color:var(--slate)">
+    <i class="fas fa-shield-halved" style="font-size:36px;color:var(--platinum);display:block;margin-bottom:14px"></i>
+    No audit entries yet. Actions will appear here as users interact with the system.
+  </div>
+  {% endfor %}
+
+  <!-- Pagination -->
+  {% if logs.pages > 1 %}
+  <div style="padding:16px 24px;border-top:1px solid var(--platinum);display:flex;gap:8px;align-items:center">
+    {% if logs.has_prev %}
+    <a href="?page={{ logs.prev_num }}" class="btn btn-outline btn-sm"><i class="fas fa-chevron-left"></i></a>
+    {% endif %}
+    <span style="font-size:13px;color:var(--slate)">Page {{ logs.page }} of {{ logs.pages }}</span>
+    {% if logs.has_next %}
+    <a href="?page={{ logs.next_num }}" class="btn btn-outline btn-sm"><i class="fas fa-chevron-right"></i></a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

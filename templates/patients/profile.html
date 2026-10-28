@@ -1,0 +1,555 @@
+{% extends "base.html" %}
+{% block title %}{{ patient.full_name }} — MediVault{% endblock %}
+{% block page_title %}{{ patient.full_name }}{% endblock %}
+{% block page_subtitle %}Patient ID: {{ patient.patient_id }}{% endblock %}
+
+{% block sidebar_nav %}
+<div class="nav-section-label">Navigation</div>
+<a href="/dashboard" class="nav-item"><i class="fas fa-gauge-high"></i> Dashboard</a>
+<a href="/patients" class="nav-item"><i class="fas fa-hospital-user"></i> All Patients</a>
+{% if current_user.role in ['admin','receptionist'] %}
+<a href="/patients/new" class="nav-item"><i class="fas fa-user-plus"></i> Register Patient</a>
+{% endif %}
+<div class="nav-section-label">This Patient</div>
+<a href="#profile"       class="nav-item active"><i class="fas fa-id-card"></i> Profile</a>
+<a href="#visits"        class="nav-item"><i class="fas fa-stethoscope"></i> Visit History</a>
+<a href="#scans"         class="nav-item"><i class="fas fa-x-ray"></i> Scans</a>
+<a href="#prescriptions" class="nav-item"><i class="fas fa-pills"></i> Prescriptions</a>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.profile-header {
+  background:linear-gradient(135deg,var(--royal-deep),var(--royal),var(--teal));
+  border-radius:20px; padding:32px; margin-bottom:28px;
+  display:flex; align-items:center; gap:28px; color:var(--white); position:relative; overflow:hidden;
+}
+.profile-header::before {
+  content:''; position:absolute; inset:0;
+  background:radial-gradient(circle at 80% 50%,rgba(201,168,76,0.1),transparent 60%);
+}
+.ph-avatar {
+  width:88px; height:88px; border-radius:20px; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Playfair Display',serif; font-size:36px; font-weight:700;
+  border:3px solid rgba(201,168,76,0.5);
+  position:relative; z-index:1;
+}
+.ph-info { position:relative; z-index:1; flex:1; }
+.ph-id   { font-size:11px; letter-spacing:2.5px; text-transform:uppercase; color:var(--gold-light); opacity:0.85; }
+.ph-name { font-family:'Playfair Display',serif; font-size:32px; font-weight:700; line-height:1.1; margin-top:4px; }
+.ph-sub  { font-size:14px; color:rgba(255,255,255,0.7); margin-top:8px; display:flex; gap:20px; flex-wrap:wrap; }
+.ph-sub span { display:flex; align-items:center; gap:6px; }
+.ph-actions { display:flex; gap:12px; position:relative; z-index:1; }
+
+.key-badge {
+  background:rgba(201,168,76,0.15); border:1px solid rgba(201,168,76,0.35);
+  border-radius:10px; padding:10px 16px;
+  display:flex; align-items:center; gap:10px; margin-top:16px;
+  position:relative; z-index:1;
+}
+.key-badge i { color:var(--gold-light); }
+.key-badge .kb-label { font-size:10px; letter-spacing:2px; text-transform:uppercase; color:rgba(255,255,255,0.6); }
+.key-badge .kb-val   { font-family:monospace; font-size:12px; color:var(--gold-light); }
+
+/* Profile grid */
+.profile-grid { display:grid; grid-template-columns:1fr 2fr; gap:24px; }
+
+.info-card { background:var(--white); border-radius:16px; border:1px solid var(--platinum); overflow:hidden; margin-bottom:24px; }
+.info-card-header { padding:16px 20px; background:var(--ivory); border-bottom:1px solid var(--platinum); display:flex; align-items:center; gap:10px; }
+.info-card-header i { color:var(--royal); }
+.info-card-header h4 { font-family:'Playfair Display',serif; font-size:15px; font-weight:600; color:var(--royal); }
+.info-card-body { padding:20px; }
+.info-row { display:flex; flex-direction:column; margin-bottom:14px; }
+.info-row:last-child { margin-bottom:0; }
+.info-label { font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--slate); font-weight:600; }
+.info-val   { font-size:14px; color:var(--navy-text); margin-top:3px; font-weight:500; }
+
+/* Allergy / condition tags */
+.tag {
+  display:inline-block; padding:4px 12px; border-radius:100px;
+  font-size:12px; font-weight:500; margin:3px 3px 0 0;
+}
+.tag-allergy   { background:#FEE2E2; color:var(--rose); }
+.tag-condition { background:#FEF3C7; color:#92400E; }
+
+/* Timeline */
+.timeline { position:relative; padding-left:28px; }
+.timeline::before { content:''; position:absolute; left:10px; top:0; bottom:0; width:2px; background:var(--platinum); }
+.tl-item { position:relative; margin-bottom:28px; }
+.tl-dot {
+  position:absolute; left:-24px; top:4px;
+  width:14px; height:14px; border-radius:50%;
+  border:3px solid var(--white);
+  box-shadow:0 0 0 2px var(--royal);
+  background:var(--royal);
+}
+.tl-dot.discharged { background:var(--teal); box-shadow:0 0 0 2px var(--teal); }
+.tl-card {
+  background:var(--white); border-radius:14px; border:1px solid var(--platinum);
+  overflow:hidden; transition:box-shadow 0.2s;
+}
+.tl-card:hover { box-shadow:0 8px 24px rgba(27,58,107,0.1); }
+.tl-header {
+  padding:16px 20px; border-bottom:1px solid var(--platinum);
+  display:flex; align-items:center; justify-content:space-between;
+  background:var(--ivory);
+}
+.tl-date   { font-size:12px; color:var(--slate); }
+.tl-doctor { font-size:12px; color:var(--royal); font-weight:500; }
+.tl-body   { padding:16px 20px; }
+.tl-row    { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.tl-field  .tf-label { font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--slate); }
+.tl-field  .tf-val   { font-size:13px; color:var(--navy-text); margin-top:3px; line-height:1.6; }
+
+/* Prescriptions inside visit */
+.rx-list { margin-top:14px; padding-top:14px; border-top:1px dashed var(--platinum); }
+.rx-item {
+  display:flex; align-items:center; gap:12px;
+  background:var(--ivory); border-radius:10px; padding:10px 14px;
+  margin-bottom:8px; font-size:13px;
+}
+.rx-item i { color:var(--emerald); }
+.rx-med  { font-weight:600; color:var(--royal); }
+.rx-dose { color:var(--slate); font-size:12px; }
+
+/* Add visit / prescription forms */
+.add-form {
+  background:var(--ivory); border:1.5px dashed var(--platinum);
+  border-radius:14px; padding:20px; margin-top:16px; display:none;
+}
+.add-form.open { display:block; }
+.add-form .form-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px; }
+.add-form .fg label { font-size:11px; text-transform:uppercase; letter-spacing:1px; color:var(--slate); font-weight:600; }
+.add-form .fg input,
+.add-form .fg select,
+.add-form .fg textarea {
+  padding:10px 14px; border:1.5px solid var(--platinum); border-radius:9px;
+  background:var(--white); font-family:'DM Sans',sans-serif; font-size:13px; color:var(--navy-text);
+  outline:none; transition:border-color 0.2s;
+}
+.add-form .fg input:focus,
+.add-form .fg select:focus,
+.add-form .fg textarea:focus { border-color:var(--royal); }
+
+/* Scans section */
+.scans-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:16px; }
+.scan-card {
+  background:var(--white); border-radius:14px; border:1px solid var(--platinum);
+  overflow:hidden; transition:all 0.25s;
+}
+.scan-card:hover { transform:translateY(-3px); box-shadow:0 12px 32px rgba(27,58,107,0.1); }
+.scan-thumb {
+  height:120px; background:linear-gradient(135deg,var(--royal-deep),var(--royal));
+  display:flex; align-items:center; justify-content:center;
+  font-size:36px; color:rgba(255,255,255,0.3); position:relative;
+}
+.scan-thumb .lock-badge {
+  position:absolute; top:8px; right:8px;
+  background:rgba(201,168,76,0.2); border:1px solid rgba(201,168,76,0.4);
+  color:var(--gold-light); font-size:10px; padding:3px 8px; border-radius:6px;
+  display:flex; align-items:center; gap:4px;
+}
+.scan-info { padding:12px 14px; }
+.scan-type { font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:var(--teal); font-weight:600; }
+.scan-part { font-size:14px; font-weight:600; color:var(--royal); margin-top:3px; }
+.scan-date { font-size:11px; color:var(--slate); margin-top:4px; }
+.scan-actions { padding:0 14px 14px; display:flex; gap:8px; }
+
+.section-sep {
+  display:flex; align-items:center; gap:14px; margin:32px 0 20px;
+}
+.section-sep h2 {
+  font-family:'Playfair Display',serif; font-size:20px; font-weight:600; color:var(--royal);
+  white-space:nowrap;
+}
+.section-sep::after { content:''; flex:1; height:1px; background:var(--platinum); }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Profile Header -->
+<div class="profile-header">
+  <div class="ph-avatar {% if patient.gender == 'Female' %}avatar-f{% endif %}" style="background:linear-gradient(135deg,rgba(255,255,255,0.15),rgba(255,255,255,0.05))">
+    {{ patient.full_name[0].upper() }}
+  </div>
+  <div class="ph-info">
+    <div class="ph-id">{{ patient.patient_id }} &nbsp;·&nbsp; {{ patient.hospital_id }}</div>
+    <div class="ph-name">{{ patient.full_name }}</div>
+    <div class="ph-sub">
+      <span><i class="fas fa-calendar"></i> {{ patient.date_of_birth.strftime('%d %b %Y') }}</span>
+      <span><i class="fas fa-venus-mars"></i> {{ patient.gender or '—' }}</span>
+      <span><i class="fas fa-tint"></i> {{ patient.blood_group or '—' }}</span>
+      <span><i class="fas fa-phone"></i> {{ patient.phone }}</span>
+    </div>
+    <div class="key-badge">
+      <i class="fas fa-key"></i>
+      <div>
+        <div class="kb-label">Encryption Key Seed (SHA-256 derived)</div>
+        <div class="kb-val" id="patient-key-display">Computing…</div>
+      </div>
+    </div>
+  </div>
+  <div class="ph-actions">
+    <a href="/patients/{{ patient.id }}/edit" class="btn btn-outline" style="border-color:rgba(255,255,255,0.3);color:var(--white)"><i class="fas fa-pen"></i> Edit</a>
+    {% if current_user.role in ['admin','doctor','radiologist'] %}
+    <a href="/patients/{{ patient.id }}/visit/new" class="btn btn-gold"><i class="fas fa-plus"></i> New Visit</a>
+    {% endif %}
+    {% if current_user.role == 'admin' %}
+    <button type="button" onclick="document.getElementById('portal-modal').style.display='flex'"
+      class="btn btn-outline" style="border-color:rgba(110,231,183,0.5);color:#6EE7B7">
+      <i class="fas fa-user-shield"></i> Patient Portal
+    </button>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Patient Portal Enable Modal -->
+{% if current_user.role == 'admin' %}
+<div id="portal-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;align-items:center;justify-content:center">
+  <div style="background:white;border-radius:20px;padding:32px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3)">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+      <div style="width:44px;height:44px;border-radius:12px;background:#ECFDF5;color:#065F46;display:flex;align-items:center;justify-content:center;font-size:18px"><i class="fas fa-user-shield"></i></div>
+      <div>
+        <div style="font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--royal)">Enable Patient Portal</div>
+        <div style="font-size:12px;color:var(--slate)">Give {{ patient.full_name }} read-only login access</div>
+      </div>
+    </div>
+
+    {% if patient.email %}
+    <div style="background:#ECFDF5;border:1px solid #6EE7B7;border-radius:10px;padding:12px 14px;font-size:13px;color:#065F46;margin-bottom:18px">
+      <i class="fas fa-envelope" style="margin-right:6px"></i>
+      Login email will be: <strong>{{ patient.email }}</strong>
+    </div>
+    <form method="POST" action="/admin/patient-portal/enable">
+      <input type="hidden" name="patient_id" value="{{ patient.id }}">
+      <div style="margin-bottom:16px">
+        <label style="display:block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--royal);margin-bottom:8px">Set Portal Password</label>
+        <input type="password" name="portal_password" required minlength="6"
+          placeholder="Min 6 characters"
+          style="width:100%;padding:11px 14px;border:1.5px solid var(--platinum);border-radius:10px;font-size:14px;outline:none;box-sizing:border-box">
+        <div style="font-size:11px;color:var(--slate);margin-top:5px">Share this password with the patient privately.</div>
+      </div>
+      <div style="background:#FFF8E6;border:1px solid rgba(201,168,76,0.3);border-radius:10px;padding:11px 14px;font-size:12px;color:#7C5A1E;margin-bottom:18px">
+        <i class="fas fa-shield-halved"></i> Patient will have <strong>read-only</strong> access — they can view visits, prescriptions, and lab reports but cannot edit anything.
+      </div>
+      <div style="display:flex;gap:10px">
+        <button type="submit" style="flex:1;padding:12px;background:linear-gradient(135deg,#065F46,#2E7D52);color:white;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">
+          <i class="fas fa-check"></i> Enable Access
+        </button>
+        <button type="button" onclick="document.getElementById('portal-modal').style.display='none'"
+          style="padding:12px 18px;border:1.5px solid var(--platinum);background:white;border-radius:10px;cursor:pointer;font-size:14px;font-weight:600;color:var(--slate)">
+          Cancel
+        </button>
+      </div>
+    </form>
+    {% else %}
+    <div style="background:#FEE2E2;border:1px solid #FECACA;border-radius:10px;padding:14px;font-size:13px;color:#991B1B;margin-bottom:18px">
+      <i class="fas fa-exclamation-triangle"></i> <strong>No email address on file.</strong><br>
+      Please edit this patient's profile and add an email address before enabling portal access.
+    </div>
+    <div style="display:flex;gap:10px">
+      <a href="/patients/{{ patient.id }}/edit" style="flex:1;padding:12px;background:var(--royal);color:white;border-radius:10px;text-decoration:none;text-align:center;font-size:14px;font-weight:700">
+        <i class="fas fa-pen"></i> Edit Profile
+      </a>
+      <button type="button" onclick="document.getElementById('portal-modal').style.display='none'"
+        style="padding:12px 18px;border:1.5px solid var(--platinum);background:white;border-radius:10px;cursor:pointer;font-size:14px;font-weight:600;color:var(--slate)">
+        Cancel
+      </button>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+<!-- Profile + Info Grid -->
+<div id="profile" class="profile-grid">
+
+  <!-- Left: Static Info -->
+  <div>
+    <div class="info-card">
+      <div class="info-card-header"><i class="fas fa-user"></i><h4>Personal Info</h4></div>
+      <div class="info-card-body">
+        <div class="info-row"><div class="info-label">Full Name</div><div class="info-val">{{ patient.full_name }}</div></div>
+        <div class="info-row"><div class="info-label">Date of Birth</div><div class="info-val">{{ patient.date_of_birth.strftime('%d %B %Y') }}</div></div>
+        <div class="info-row"><div class="info-label">Gender</div><div class="info-val">{{ patient.gender or '—' }}</div></div>
+        <div class="info-row"><div class="info-label">Blood Group</div><div class="info-val">{{ patient.blood_group or '—' }}</div></div>
+        <div class="info-row"><div class="info-label">Phone</div><div class="info-val">{{ patient.phone or '—' }}</div></div>
+        <div class="info-row"><div class="info-label">Email</div><div class="info-val">{{ patient.email or '—' }}</div></div>
+        <div class="info-row"><div class="info-label">Address</div><div class="info-val">{{ patient.address or '—' }}</div></div>
+      </div>
+    </div>
+
+    <div class="info-card">
+      <div class="info-card-header"><i class="fas fa-phone-alt"></i><h4>Emergency Contact</h4></div>
+      <div class="info-card-body">
+        <div class="info-row"><div class="info-label">Contact Name</div><div class="info-val">{{ patient.emergency_contact_name or '—' }}</div></div>
+        <div class="info-row"><div class="info-label">Contact Phone</div><div class="info-val">{{ patient.emergency_contact_phone or '—' }}</div></div>
+      </div>
+    </div>
+
+    <div class="info-card">
+      <div class="info-card-header"><i class="fas fa-notes-medical"></i><h4>Medical Background</h4></div>
+      <div class="info-card-body">
+        <div class="info-label">Allergies</div>
+        <div style="margin-top:6px;margin-bottom:14px">
+          {% if patient.allergies %}
+            {% for a in patient.allergies.split(',') %}
+              <span class="tag tag-allergy">{{ a.strip() }}</span>
+            {% endfor %}
+          {% else %}
+            <span style="font-size:13px;color:var(--slate)">None recorded</span>
+          {% endif %}
+        </div>
+        <div class="info-label">Chronic Conditions</div>
+        <div style="margin-top:6px">
+          {% if patient.chronic_conditions %}
+            {% for c in patient.chronic_conditions.split(',') %}
+              <span class="tag tag-condition">{{ c.strip() }}</span>
+            {% endfor %}
+          {% else %}
+            <span style="font-size:13px;color:var(--slate)">None recorded</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="info-card">
+      <div class="info-card-header"><i class="fas fa-chart-bar"></i><h4>Summary</h4></div>
+      <div class="info-card-body">
+        <div class="info-row"><div class="info-label">Total Visits</div><div class="info-val">{{ visits|length }}</div></div>
+        <div class="info-row"><div class="info-label">Total Scans</div><div class="info-val">{{ scans|length }}</div></div>
+        <div class="info-row"><div class="info-label">Registered</div><div class="info-val">{{ patient.created_at.strftime('%d %b %Y') }}</div></div>
+        <div class="info-row"><div class="info-label">Hospital ID</div><div class="info-val">{{ patient.hospital_id }}</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: History Timeline -->
+  <div>
+
+    <!-- Visit History -->
+    <div class="section-sep" id="visits">
+      <h2><i class="fas fa-stethoscope" style="color:var(--teal);margin-right:10px"></i>Visit History</h2>
+    </div>
+
+    {% if current_user.role in ['admin','doctor'] %}
+    <button class="btn btn-primary btn-sm" onclick="toggleForm('visit-form')" style="margin-bottom:16px">
+      <i class="fas fa-plus"></i> Add Visit Record
+    </button>
+
+    <!-- Add Visit Form -->
+    <div class="add-form" id="visit-form">
+      <form method="POST" action="/patients/{{ patient.id }}/visit/new">
+        <div class="form-row">
+          <div class="fg"><label>Reason for Visit *</label><input type="text" name="reason" required placeholder="Chief complaint…"/></div>
+          <div class="fg"><label>Diagnosis</label><input type="text" name="diagnosis" placeholder="Provisional diagnosis…"/></div>
+        </div>
+        <div class="form-row" style="grid-template-columns:2fr 1fr">
+          <div class="fg"><label>Clinical Notes</label><textarea name="notes" rows="3" placeholder="Examination findings, observations…"></textarea></div>
+          <div class="fg"><label>Visit Status</label>
+            <select name="status">
+              <option value="active">Active</option>
+              <option value="discharged">Discharged</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button type="submit" class="btn btn-gold btn-sm"><i class="fas fa-save"></i> Save Visit</button>
+          <button type="button" class="btn btn-outline btn-sm" onclick="toggleForm('visit-form')">Cancel</button>
+        </div>
+      </form>
+    </div>
+    {% endif %}
+
+    {% if visits %}
+    <div class="timeline" id="visits">
+      {% for v in visits %}
+      <div class="tl-item">
+        <div class="tl-dot {{ v.status }}"></div>
+        <div class="tl-card">
+          <div class="tl-header">
+            <div>
+              <div style="font-weight:600;font-size:15px;color:var(--royal)">{{ v.reason or 'General Visit' }}</div>
+              <div class="tl-date">{{ v.visit_date.strftime('%d %B %Y, %I:%M %p') }}</div>
+            </div>
+            <div style="text-align:right">
+              <span class="status-badge status-{{ v.status }}">{{ v.status.title() }}</span>
+              {% if v.doctor_id %}
+              <div class="tl-doctor" style="margin-top:4px">
+                <i class="fas fa-user-doctor"></i>
+                {% set doc = doctors | selectattr('id','equalto',v.doctor_id) | first %}
+                {{ doc.full_name if doc else 'Unknown Doctor' }}
+              </div>
+              {% endif %}
+            </div>
+          </div>
+          <div class="tl-body">
+            <div class="tl-row">
+              <div class="tl-field">
+                <div class="tf-label">Diagnosis</div>
+                <div class="tf-val">{{ v.diagnosis or '—' }}</div>
+              </div>
+              <div class="tl-field">
+                <div class="tf-label">Clinical Notes</div>
+                <div class="tf-val">{{ v.notes or '—' }}</div>
+              </div>
+            </div>
+
+            <!-- Prescriptions for this visit -->
+            {% if v.prescriptions %}
+            <div class="rx-list">
+              <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--slate);margin-bottom:8px;font-weight:600">Prescriptions</div>
+              {% for rx in v.prescriptions %}
+              <div class="rx-item">
+                <i class="fas fa-pills"></i>
+                <div>
+                  <span class="rx-med">{{ rx.medicine }}</span>
+                  <span class="rx-dose"> — {{ rx.dosage }} · {{ rx.frequency }} · {{ rx.duration }}</span>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Add Prescription -->
+            {% if current_user.role in ['admin','doctor'] %}
+            <div style="margin-top:12px">
+              <button class="btn btn-outline btn-sm" onclick="toggleForm('rx-form-{{ v.id }}')">
+                <i class="fas fa-plus"></i> Add Prescription
+              </button>
+              <div class="add-form" id="rx-form-{{ v.id }}">
+                <form method="POST" action="/visits/{{ v.id }}/prescription/new">
+                  <div class="form-row" style="grid-template-columns:repeat(4,1fr)">
+                    <div class="fg"><label>Medicine *</label><input type="text" name="medicine" required placeholder="Drug name"/></div>
+                    <div class="fg"><label>Dosage</label><input type="text" name="dosage" placeholder="e.g. 500mg"/></div>
+                    <div class="fg"><label>Frequency</label><input type="text" name="frequency" placeholder="e.g. 2x daily"/></div>
+                    <div class="fg"><label>Duration</label><input type="text" name="duration" placeholder="e.g. 7 days"/></div>
+                  </div>
+                  <div class="fg" style="margin-bottom:12px"><label>Notes</label><input type="text" name="rx_notes" placeholder="Additional notes…"/></div>
+                  <button type="submit" class="btn btn-gold btn-sm"><i class="fas fa-save"></i> Save</button>
+                  <button type="button" class="btn btn-outline btn-sm" onclick="toggleForm('rx-form-{{ v.id }}')">Cancel</button>
+                </form>
+              </div>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div style="text-align:center;padding:40px;color:var(--slate);background:var(--white);border-radius:16px;border:1px solid var(--platinum)">
+      <i class="fas fa-stethoscope" style="font-size:32px;color:var(--platinum);display:block;margin-bottom:12px"></i>
+      No visit records yet.
+    </div>
+    {% endif %}
+
+    <!-- Scans Section -->
+    <div class="section-sep" id="scans" style="margin-top:40px">
+      <h2><i class="fas fa-x-ray" style="color:#7C3AED;margin-right:10px"></i>Medical Scans</h2>
+    </div>
+
+    {% if current_user.role in ['admin','doctor','radiologist'] %}
+    <a href="/scans/upload?patient={{ patient.id }}" class="btn btn-primary btn-sm" style="margin-bottom:16px">
+      <i class="fas fa-upload"></i> Upload & Encrypt Scan
+    </a>
+    {% endif %}
+
+    {% if scans %}
+    <div class="scans-grid" id="scans">
+      {% for s in scans %}
+      <div class="scan-card">
+        <div class="scan-thumb">
+          <i class="fas fa-x-ray"></i>
+          <div class="lock-badge"><i class="fas fa-lock"></i> Encrypted</div>
+        </div>
+        <div class="scan-info">
+          <div class="scan-type">{{ s.scan_type or 'Scan' }}</div>
+          <div class="scan-part">{{ s.body_part or '—' }}</div>
+          <div class="scan-date">{{ s.uploaded_at.strftime('%d %b %Y') }}</div>
+        </div>
+        <div class="scan-actions">
+          <a href="/scans/{{ s.id }}/view" class="btn btn-outline btn-sm"><i class="fas fa-eye"></i> View</a>
+          <a href="/scans/{{ s.id }}/download" class="btn btn-gold btn-sm"><i class="fas fa-download"></i></a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div style="text-align:center;padding:40px;color:var(--slate);background:var(--white);border-radius:16px;border:1px solid var(--platinum)">
+      <i class="fas fa-x-ray" style="font-size:32px;color:var(--platinum);display:block;margin-bottom:12px"></i>
+      No scans uploaded yet.
+    </div>
+    {% endif %}
+    <!-- Lab Reports Section -->
+    <div class="section-sep" id="lab-reports" style="margin-top:40px">
+      <h2><i class="fas fa-flask" style="color:var(--emerald);margin-right:10px"></i>Lab Reports</h2>
+    </div>
+
+    {% if current_user.role in ['admin','doctor','lab','receptionist'] %}
+    <a href="/reports/upload" class="btn btn-primary btn-sm" style="margin-bottom:16px">
+      <i class="fas fa-upload"></i> Upload Lab Report
+    </a>
+    {% endif %}
+
+    {% if lab_reports %}
+    <div style="display:flex;flex-direction:column;gap:12px" id="lab-reports-list">
+      {% for r in lab_reports %}
+      <div style="background:var(--white);border:1px solid var(--platinum);border-radius:14px;padding:18px 20px;display:flex;align-items:center;gap:16px;transition:all .2s" onmouseover="this.style.borderColor='var(--emerald)'" onmouseout="this.style.borderColor='var(--platinum)'">
+        <div style="width:46px;height:46px;border-radius:12px;background:#ECFDF5;display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--emerald);flex-shrink:0">
+          {% set ext = r.file_path.rsplit('.',1)[-1].lower() %}
+          {% if ext == 'pdf' %}<i class="fas fa-file-pdf"></i>
+          {% else %}<i class="fas fa-file-image"></i>{% endif %}
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;color:var(--navy-text);font-size:14px">{{ r.report_name }}</div>
+          <div style="font-size:12px;color:var(--slate);margin-top:3px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <span style="background:#ECFDF5;color:var(--emerald);padding:2px 8px;border-radius:6px;font-weight:600;font-size:11px">{{ r.report_type or 'General' }}</span>
+            {% if r.visit_id %}<span><i class="fas fa-stethoscope"></i> Visit #{{ r.visit_id }}</span>{% endif %}
+            <span><i class="fas fa-calendar"></i> {{ r.uploaded_at.strftime('%d %b %Y, %I:%M %p') }}</span>
+            {% if r.notes %}<span><i class="fas fa-note-sticky"></i> {{ r.notes }}</span>{% endif %}
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-shrink:0">
+          <a href="/reports/{{ r.id }}/view" target="_blank" class="btn btn-outline btn-sm" title="View"><i class="fas fa-eye"></i></a>
+          <a href="/reports/{{ r.id }}/download" class="btn btn-gold btn-sm" title="Download"><i class="fas fa-download"></i></a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div style="text-align:center;padding:36px;color:var(--slate);background:var(--white);border-radius:16px;border:1px solid var(--platinum)">
+      <i class="fas fa-flask" style="font-size:32px;color:var(--platinum);display:block;margin-bottom:12px"></i>
+      No lab reports uploaded yet.
+    </div>
+    {% endif %}
+
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleForm(id) {
+  const f = document.getElementById(id);
+  f.classList.toggle('open');
+}
+
+// Compute + display key seed preview
+async function sha256(msg) {
+  const buf  = new TextEncoder().encode(msg);
+  const hash = await crypto.subtle.digest('SHA-256', buf);
+  return Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+(async () => {
+  const pid = "{{ patient.patient_id }}";
+  const dob = "{{ patient.date_of_birth }}";
+  const raw = `${pid}${dob}HOSP_001`;
+  const h   = await sha256(raw);
+  document.getElementById('patient-key-display').textContent = h.substring(0,32) + '…';
+})();
+</script>
+{% endblock %}

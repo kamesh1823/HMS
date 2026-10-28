@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Register Patient from Appointment — MediVault{% endblock %}
+{% block page_title %}Register Patient{% endblock %}
+{% block page_subtitle %}Convert appointment #{{ appt.id }} to a registered patient{% endblock %}
+
+{% block sidebar_nav %}
+<div class="nav-section-label">Appointments</div>
+<a href="/dashboard" class="nav-item"><i class="fas fa-gauge-high"></i> Dashboard</a>
+<a href="/appointments" class="nav-item"><i class="fas fa-calendar-check"></i> All Appointments</a>
+<a href="/patients/new" class="nav-item active"><i class="fas fa-user-plus"></i> Register Patient</a>
+{% endblock %}
+
+{% block content %}
+<div style="max-width:680px">
+  <div style="background:linear-gradient(135deg,var(--emerald),#1a6b3a);border-radius:20px;padding:28px;color:white;margin-bottom:24px">
+    <div style="font-size:13px;opacity:.75;margin-bottom:6px">Converting appointment to registered patient</div>
+    <div style="font-family:'Playfair Display',serif;font-size:24px;font-weight:700">{{ appt.patient_name }}</div>
+    <div style="margin-top:8px;opacity:.85;font-size:14px">
+      <i class="fas fa-phone"></i> {{ appt.phone }}
+      {% if appt.email %} &nbsp;·&nbsp; <i class="fas fa-envelope"></i> {{ appt.email }}{% endif %}
+    </div>
+  </div>
+
+  <div style="background:var(--white);border-radius:20px;padding:28px;box-shadow:0 2px 16px rgba(0,0,0,0.08)">
+    <p style="color:var(--slate);margin-bottom:20px;font-size:14px">
+      This will redirect you to the patient registration form with the appointment details pre-loaded.
+      Please complete all medical fields to fully register the patient.
+    </p>
+    <div style="display:flex;gap:12px">
+      <a href="/patients/new?name={{ appt.patient_name|urlencode }}&phone={{ appt.phone|urlencode }}&email={{ appt.email|urlencode }}"
+        style="padding:12px 24px;background:var(--royal);color:white;border-radius:10px;text-decoration:none;font-weight:600">
+        <i class="fas fa-user-plus"></i> Register Now
+      </a>
+      <a href="/appointments/{{ appt.id }}" style="padding:12px 24px;background:var(--platinum);color:var(--navy-text);border-radius:10px;text-decoration:none">
+        <i class="fas fa-arrow-left"></i> Back
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

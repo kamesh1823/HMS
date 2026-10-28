@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>No Record Found — MediVault</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <style>
+    :root{--royal:#1B3A6B;--gold:#C9A84C;--navy:#0D1B2A;--slate:#6B7280;}
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'Inter',sans-serif;background:#FAF8F5;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;}
+    .box{background:white;border-radius:20px;padding:48px;max-width:480px;text-align:center;border:1px solid #E8E4DC;box-shadow:0 4px 24px rgba(0,0,0,0.06);}
+    h1{font-family:'Playfair Display',serif;font-size:24px;color:var(--royal);margin:16px 0 10px;}
+    p{font-size:14px;color:var(--slate);line-height:1.7;margin-bottom:24px;}
+    a{display:inline-flex;align-items:center;gap:8px;padding:11px 24px;border-radius:10px;text-decoration:none;font-weight:600;font-size:14px;}
+    .btn-primary{background:var(--royal);color:white;margin-right:10px;}
+    .btn-outline{border:1.5px solid var(--royal);color:var(--royal);}
+  </style>
+</head>
+<body>
+  <div class="box">
+    <i class="fas fa-user-slash" style="font-size:48px;color:#E8E4DC"></i>
+    <h1>No Record Linked</h1>
+    <p>Your account (<strong>{{ current_user.email }}</strong>) is not linked to any patient record in our system. Please contact the reception desk to have your email added to your patient profile.</p>
+    <div>
+      <a href="/" class="btn-primary"><i class="fas fa-house"></i> Home</a>
+      <a href="/auth/logout" class="btn-outline"><i class="fas fa-right-from-bracket"></i> Logout</a>
+    </div>
+  </div>
+</body>
+</html>

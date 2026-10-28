@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block title %}Add Staff User — MediVault{% endblock %}
+{% block page_title %}Add Staff User{% endblock %}
+{% block page_subtitle %}Create a new hospital system account{% endblock %}
+
+{% block sidebar_nav %}
+<div class="nav-section-label">Admin</div>
+<a href="/dashboard"      class="nav-item"><i class="fas fa-gauge-high"></i> Dashboard</a>
+<a href="/admin/users"    class="nav-item"><i class="fas fa-users-gear"></i> Staff Users</a>
+<a href="/admin/users/new" class="nav-item active"><i class="fas fa-user-plus"></i> Add User</a>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.nuf-wrap { max-width:560px; }
+.form-card { background:var(--white); border-radius:20px; border:1px solid var(--platinum); overflow:hidden; margin-bottom:22px; }
+.fc-header { padding:18px 24px; border-bottom:1px solid var(--platinum); background:var(--ivory); display:flex; align-items:center; gap:12px; }
+.fc-icon { width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:15px; }
+.fc-header h3 { font-family:'Playfair Display',serif; font-size:17px; font-weight:600; color:var(--royal); }
+.fc-body { padding:24px; }
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px; }
+.fg { display:flex; flex-direction:column; gap:6px; }
+.fg label { font-size:11px; text-transform:uppercase; letter-spacing:1px; color:var(--navy-text); font-weight:600; }
+.fg input, .fg select {
+  padding:11px 14px; border:1.5px solid var(--platinum); border-radius:10px;
+  background:var(--ivory); font-family:'DM Sans',sans-serif; font-size:14px; color:var(--navy-text);
+  outline:none; transition:border-color 0.2s;
+}
+.fg input:focus, .fg select:focus { border-color:var(--royal); background:var(--white); }
+.form-actions { display:flex; gap:12px; padding:20px 24px; background:var(--ivory); border-top:1px solid var(--platinum); }
+
+.role-info { background:var(--ivory); border-radius:12px; padding:14px 16px; margin-top:8px; font-size:13px; color:var(--slate); line-height:1.6; display:none; }
+.role-info.show { display:block; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="nuf-wrap">
+  <form method="POST" action="/admin/users/new">
+    <div class="form-card">
+      <div class="fc-header">
+        <div class="fc-icon" style="background:#EEF2FF;color:var(--royal)"><i class="fas fa-user"></i></div>
+        <h3>Personal Details</h3>
+      </div>
+      <div class="fc-body">
+        <div class="form-row">
+          <div class="fg" style="grid-column:1/-1">
+            <label>Full Name *</label>
+            <input type="text" name="full_name" required placeholder="Dr. John Smith"/>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="fg">
+            <label>Email *</label>
+            <input type="email" name="email" required placeholder="doctor@medivault.com"/>
+          </div>
+          <div class="fg">
+            <label>Phone</label>
+            <input type="tel" name="phone" placeholder="+91 XXXXX XXXXX"/>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="fg">
+            <label>Department</label>
+            <input type="text" name="department" placeholder="e.g. Radiology, Cardiology"/>
+          </div>
+          <div class="fg">
+            <label>Initial Password</label>
+            <input type="text" name="password" value="MediVault@123" placeholder="Temporary password"/>
+          </div>
+        </div>
+        <div id="role-info-patient" class="role-info"><strong>Patient:</strong> Read-only access to their own health records — visits, prescriptions, and lab reports. Cannot view other patients or modify any data. Their email must match the registered patient email.</div>
+        <div id="role-info-lab" class="role-info"><strong>Lab Technician:</strong> Upload and manage patient lab reports (blood, urine, imaging). Reports visible to doctors and admin.</div>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <div class="fc-header">
+        <div class="fc-icon" style="background:#FFF8E6;color:var(--gold)"><i class="fas fa-user-gear"></i></div>
+        <h3>Role Assignment</h3>
+      </div>
+      <div class="fc-body">
+        <div class="fg">
+          <label>Role *</label>
+          <select name="role" id="role-select" onchange="showRoleInfo(this.value)" required>
+            <option value="">— Select role —</option>
+            <option value="doctor">Doctor</option>
+            <option value="radiologist">Radiologist</option>
+            <option value="receptionist">Receptionist</option>
+            <option value="admin">Administrator</option>
+            <option value="lab">Lab Technician</option>
+            <option value="patient">Patient (Portal Access)</option>
+          </select>
+        </div>
+        <div id="role-info-admin"        class="role-info"><strong>Administrator:</strong> Full access to all modules, user management, audit logs, and system settings.</div>
+        <div id="role-info-doctor"       class="role-info"><strong>Doctor:</strong> View/manage assigned patients, create visits, add prescriptions, upload and decrypt scans.</div>
+        <div id="role-info-radiologist"  class="role-info"><strong>Radiologist:</strong> Upload and encrypt medical scans, view encrypted/decrypted images, access metrics.</div>
+        <div id="role-info-receptionist" class="role-info"><strong>Receptionist:</strong> Register new patients, manage appointments, patient check-in, basic billing. Cannot view medical records.</div>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-gold" style="padding:13px 32px;font-size:15px">
+        <i class="fas fa-user-plus"></i> Create User
+      </button>
+      <a href="/admin/users" class="btn btn-outline">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showRoleInfo(role) {
+  document.querySelectorAll('.role-info').forEach(d => d.classList.remove('show'));
+  if (role) document.getElementById('role-info-' + role)?.classList.add('show');
+}
+</script>
+{% endblock %}

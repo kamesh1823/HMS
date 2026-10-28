@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard — MediVault{% endblock %}
+{% block page_title %}Admin Dashboard{% endblock %}
+{% block page_subtitle %}Full system overview & management{% endblock %}
+
+{% block sidebar_nav %}
+<div class="nav-section-label">Overview</div>
+<a href="/dashboard"            class="nav-item active"><i class="fas fa-gauge-high"></i> Dashboard</a>
+<a href="/patients"             class="nav-item"><i class="fas fa-hospital-user"></i> All Patients</a>
+<a href="/appointments"         class="nav-item"><i class="fas fa-calendar-check"></i> Appointments <span class="badge-count">{{ pending_appts }}</span></a>
+<a href="/staff/book-appointment" class="nav-item"><i class="fas fa-calendar-plus"></i> Book Appointment</a>
+<a href="/checkin"              class="nav-item"><i class="fas fa-door-open"></i> Patient Check-in</a>
+<a href="/billing"              class="nav-item"><i class="fas fa-receipt"></i> Billing</a>
+<div class="nav-section-label">Management</div>
+<a href="/admin/users"          class="nav-item"><i class="fas fa-users-gear"></i> Manage Staff</a>
+<a href="/admin/users?role=doctor" class="nav-item"><i class="fas fa-user-doctor"></i> Doctors</a>
+<a href="/scans"                class="nav-item"><i class="fas fa-x-ray"></i> All Scans</a>
+<a href="/reports"              class="nav-item"><i class="fas fa-file-medical"></i> Lab Reports</a>
+<div class="nav-section-label">Security</div>
+<a href="/audit-log"            class="nav-item"><i class="fas fa-shield-halved"></i> Audit Log</a>
+<a href="/metrics"              class="nav-item"><i class="fas fa-chart-line"></i> Encryption Metrics</a>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Clickable stat cards */
+a.stat-card {
+  text-decoration: none;
+  display: flex;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+a.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 36px rgba(27,58,107,0.15);
+  border-color: var(--gold);
+}
+a.stat-card:hover .sc-icon { transform: scale(1.08); }
+a.stat-card .sc-icon { transition: transform 0.2s; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Stat Cards — ALL CLICKABLE -->
+<div class="stat-cards">
+
+  <a href="/patients" class="stat-card">
+    <div class="sc-icon" style="background:#EEF2FF;color:var(--royal)"><i class="fas fa-hospital-user"></i></div>
+    <div>
+      <div class="sc-val">{{ stats.total_patients }}</div>
+      <div class="sc-label">Total Patients</div>
+      <div class="sc-change up"><i class="fas fa-arrow-up"></i> {{ stats.new_today }} today</div>
+    </div>
+  </a>
+
+  <a href="/appointments" class="stat-card">
+    <div class="sc-icon" style="background:#FFF8E6;color:var(--gold)"><i class="fas fa-calendar-check"></i></div>
+    <div>
+      <div class="sc-val">{{ stats.appointments_today }}</div>
+      <div class="sc-label">Appointments Today</div>
+      <div class="sc-change up"><i class="fas fa-clock"></i> {{ pending_appts }} pending</div>
+    </div>
+  </a>
+
+  <a href="/scans" class="stat-card">
+    <div class="sc-icon" style="background:#EDE9FE;color:#7C3AED"><i class="fas fa-lock"></i></div>
+    <div>
+      <div class="sc-val">{{ stats.total_scans }}</div>
+      <div class="sc-label">Encrypted Scans</div>
+      <div class="sc-change up"><i class="fas fa-shield-halved"></i> All secured</div>
+    </div>
+  </a>
+
+  <a href="/admin/users" class="stat-card">
+    <div class="sc-icon" style="background:#ECFDF5;color:var(--emerald)"><i class="fas fa-users"></i></div>
+    <div>
+      <div class="sc-val">{{ stats.total_staff }}</div>
+      <div class="sc-label">Active Staff</div>
+      <div class="sc-change up"><i class="fas fa-user-check"></i> {{ role_count }} roles</div>
+    </div>
+  </a>
+
+</div>
+
+<div class="content-grid">
+  <!-- Recent Patients -->
+  <div class="panel">
+    <div class="panel-header">
+      <div>
+        <h3>Recent Patients</h3>
+        <p>Latest registrations in the system</p>
+      </div>
+      <a href="/patients/new" class="btn btn-gold btn-sm"><i class="fas fa-plus"></i> New Patient</a>
+    </div>
+    <div class="panel-body" style="padding:0">
+      <table class="data-table">
+        <thead>
+          <tr><th>Patient ID</th><th>Name</th><th>Registered</th><th>Status</th><th>Action</th></tr>
+        </thead>
+        <tbody>
+          {% for p in recent_patients %}
+          <tr>
+            <td><code style="font-size:12px;background:var(--ivory);padding:3px 8px;border-radius:6px">{{ p.patient_id }}</code></td>
+            <td><strong>{{ p.full_name }}</strong><br><small style="color:var(--slate)">{{ p.blood_group or '—' }} · {{ p.gender or '—' }}</small></td>
+            <td style="font-size:12px;color:var(--slate)">{{ p.created_at.strftime('%d %b %Y') }}</td>
+            <td><span class="status-badge status-active">Active</span></td>
+            <td><a href="/patients/{{ p.id }}" class="btn btn-outline btn-sm"><i class="fas fa-eye"></i> View</a></td>
+          </tr>
+          {% else %}
+          <tr><td colspan="5" style="text-align:center;color:var(--slate);padding:32px">No patients registered yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Right column -->
+  <div style="display:flex;flex-direction:column;gap:24px">
+
+    <!-- Quick Actions -->
+    <div class="panel">
+      <div class="panel-header"><div><h3>Quick Actions</h3></div></div>
+      <div class="panel-body">
+        <div class="quick-actions">
+          <a href="/patients/new" class="qa-card">
+            <div class="qa-icon" style="background:#EEF2FF;color:var(--royal)"><i class="fas fa-user-plus"></i></div>
+            <div><div class="qa-label">New Patient</div><div class="qa-sub">Register patient</div></div>
+          </a>
+          <a href="/admin/users/new" class="qa-card">
+            <div class="qa-icon" style="background:#FFF8E6;color:var(--gold)"><i class="fas fa-user-gear"></i></div>
+            <div><div class="qa-label">Add Staff</div><div class="qa-sub">Create user</div></div>
+          </a>
+          <a href="/appointments" class="qa-card">
+            <div class="qa-icon" style="background:#FEF3C7;color:#B45309"><i class="fas fa-calendar"></i></div>
+            <div><div class="qa-label">Appointments</div><div class="qa-sub">View all</div></div>
+          </a>
+          <a href="/audit-log" class="qa-card">
+            <div class="qa-icon" style="background:#FEE2E2;color:var(--rose)"><i class="fas fa-shield-halved"></i></div>
+            <div><div class="qa-label">Audit Log</div><div class="qa-sub">Security trail</div></div>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="panel">
+      <div class="panel-header"><div><h3>Recent Activity</h3><p>Latest system events</p></div></div>
+      <div class="panel-body">
+        {% for log in recent_logs %}
+        <div class="activity-item">
+          <div class="act-dot" style="
+            {% if 'patient' in log.action|lower %}background:#EEF2FF;color:var(--royal)
+            {% elif 'scan' in log.action|lower or 'decrypt' in log.action|lower %}background:#EDE9FE;color:#7C3AED
+            {% elif 'report' in log.action|lower %}background:#FFF8E6;color:var(--gold)
+            {% elif 'appointment' in log.action|lower %}background:#ECFDF5;color:var(--emerald)
+            {% else %}background:var(--ivory);color:var(--slate){% endif %}
+          ">
+            <i class="fas fa-
+              {% if 'patient' in log.action|lower %}hospital-user
+              {% elif 'scan' in log.action|lower %}x-ray
+              {% elif 'report' in log.action|lower %}file-medical
+              {% elif 'decrypt' in log.action|lower %}unlock
+              {% elif 'appointment' in log.action|lower %}calendar-check
+              {% else %}circle-dot{% endif %}
+            "></i>
+          </div>
+          <div>
+            <div class="act-title">{{ log.action }}</div>
+            <div class="act-sub">{{ log.target }}</div>
+          </div>
+          <div class="act-time">{{ log.timestamp.strftime('%H:%M') }}</div>
+        </div>
+        {% else %}
+        <p style="text-align:center;color:var(--slate);font-size:13px;padding:16px 0">No recent activity.</p>
+        {% endfor %}
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

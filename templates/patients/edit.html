@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block title %}Edit {{ patient.full_name }} — MediVault{% endblock %}
+{% block page_title %}Edit Patient{% endblock %}
+{% block page_subtitle %}Update details for {{ patient.patient_id }}{% endblock %}
+
+{% block sidebar_nav %}
+<div class="nav-section-label">Patients</div>
+<a href="/dashboard" class="nav-item"><i class="fas fa-gauge-high"></i> Dashboard</a>
+<a href="/patients" class="nav-item"><i class="fas fa-hospital-user"></i> All Patients</a>
+<a href="/patients/{{ patient.id }}" class="nav-item active"><i class="fas fa-id-card"></i> {{ patient.full_name }}</a>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.edit-wrapper { max-width:760px; }
+.form-card { background:var(--white); border-radius:20px; border:1px solid var(--platinum); margin-bottom:24px; overflow:hidden; }
+.form-card-header { padding:20px 28px; border-bottom:1px solid var(--platinum); display:flex; align-items:center; gap:14px; background:var(--ivory); }
+.form-card-header .fch-icon { width:42px; height:42px; border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:16px; }
+.form-card-header h3 { font-family:'Playfair Display',serif; font-size:18px; font-weight:600; color:var(--royal); }
+.form-card-body { padding:28px; }
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:20px; }
+.form-row.three { grid-template-columns:1fr 1fr 1fr; }
+.fg { display:flex; flex-direction:column; gap:7px; }
+.fg label { font-size:12px; font-weight:600; color:var(--navy-text); letter-spacing:0.4px; text-transform:uppercase; }
+.fg input, .fg select, .fg textarea {
+  padding:12px 16px; border:1.5px solid var(--platinum); border-radius:10px;
+  background:var(--ivory); font-family:'DM Sans',sans-serif; font-size:14px; color:var(--navy-text);
+  outline:none; transition:border-color 0.2s;
+}
+.fg input:focus, .fg select:focus, .fg textarea:focus { border-color:var(--royal); background:var(--white); }
+.fg textarea { resize:vertical; min-height:88px; }
+.form-actions { display:flex; gap:16px; align-items:center; padding:24px 28px; background:var(--ivory); border-top:1px solid var(--platinum); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="edit-wrapper">
+  <div style="display:flex;align-items:center;gap:14px;margin-bottom:24px;padding:16px 20px;background:var(--white);border-radius:14px;border:1px solid var(--platinum)">
+    <div style="width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--royal),var(--teal));display:flex;align-items:center;justify-content:center;color:var(--white);font-family:'Playfair Display',serif;font-size:18px;font-weight:700">{{ patient.full_name[0] }}</div>
+    <div>
+      <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--slate)">Editing Patient</div>
+      <div style="font-family:'Playfair Display',serif;font-size:18px;font-weight:600;color:var(--royal)">{{ patient.full_name }} · {{ patient.patient_id }}</div>
+    </div>
+  </div>
+
+  <form method="POST" action="/patients/{{ patient.id }}/edit">
+
+    <div class="form-card">
+      <div class="form-card-header">
+        <div class="fch-icon" style="background:#EEF2FF;color:var(--royal)"><i class="fas fa-user"></i></div>
+        <div><h3>Personal Information</h3></div>
+      </div>
+      <div class="form-card-body">
+        <div class="form-row">
+          <div class="fg"><label>Full Name *</label><input type="text" name="full_name" value="{{ patient.full_name }}" required/></div>
+          <div class="fg"><label>Phone *</label><input type="tel" name="phone" value="{{ patient.phone }}"/></div>
+        </div>
+        <div class="form-row three">
+          <div class="fg">
+            <label>Gender</label>
+            <select name="gender">
+              <option {% if patient.gender == 'Male' %}selected{% endif %}>Male</option>
+              <option {% if patient.gender == 'Female' %}selected{% endif %}>Female</option>
+              <option {% if patient.gender == 'Other' %}selected{% endif %}>Other</option>
+            </select>
+          </div>
+          <div class="fg">
+            <label>Blood Group</label>
+            <select name="blood_group">
+              {% for bg in ['A+','A-','B+','B-','AB+','AB-','O+','O-'] %}
+              <option {% if patient.blood_group == bg %}selected{% endif %}>{{ bg }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="fg"><label>Email</label><input type="email" name="email" value="{{ patient.email or '' }}"/></div>
+        </div>
+        <div class="form-row" style="grid-template-columns:1fr">
+          <div class="fg"><label>Address</label><input type="text" name="address" value="{{ patient.address or '' }}"/></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <div class="form-card-header">
+        <div class="fch-icon" style="background:#FEE2E2;color:var(--rose)"><i class="fas fa-phone-alt"></i></div>
+        <div><h3>Emergency Contact</h3></div>
+      </div>
+      <div class="form-card-body">
+        <div class="form-row">
+          <div class="fg"><label>Contact Name</label><input type="text" name="emergency_contact_name" value="{{ patient.emergency_contact_name or '' }}"/></div>
+          <div class="fg"><label>Contact Phone</label><input type="tel" name="emergency_contact_phone" value="{{ patient.emergency_contact_phone or '' }}"/></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <div class="form-card-header">
+        <div class="fch-icon" style="background:#FFF8E6;color:var(--gold)"><i class="fas fa-notes-medical"></i></div>
+        <div><h3>Medical Background</h3></div>
+      </div>
+      <div class="form-card-body">
+        <div class="form-row">
+          <div class="fg"><label>Known Allergies</label><textarea name="allergies">{{ patient.allergies or '' }}</textarea></div>
+          <div class="fg"><label>Chronic Conditions</label><textarea name="chronic_conditions">{{ patient.chronic_conditions or '' }}</textarea></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-gold" style="padding:14px 36px;font-size:15px"><i class="fas fa-save"></i> Save Changes</button>
+      <a href="/patients/{{ patient.id }}" class="btn btn-outline">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

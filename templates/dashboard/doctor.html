@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% block title %}Doctor Dashboard — MediVault{% endblock %}
+{% block page_title %}Doctor Dashboard{% endblock %}
+{% block page_subtitle %}Your patients, visits & clinical schedule{% endblock %}
+
+{% block sidebar_nav %}
+<div class="nav-section-label">Clinical</div>
+<a href="/dashboard" class="nav-item active"><i class="fas fa-gauge-high"></i> Dashboard</a>
+<a href="/patients" class="nav-item"><i class="fas fa-hospital-user"></i> My Patients</a>
+<a href="/appointments" class="nav-item"><i class="fas fa-calendar-check"></i> Appointments</a>
+
+<div class="nav-section-label">Imaging & Reports</div>
+<a href="/scans" class="nav-item"><i class="fas fa-x-ray"></i> Medical Scans</a>
+<a href="/scans/upload" class="nav-item"><i class="fas fa-upload"></i> Upload Scan</a>
+<a href="/reports" class="nav-item"><i class="fas fa-file-medical"></i> Lab Reports</a>
+{% endblock %}
+
+{% block content %}
+<div class="stat-cards">
+  <a href="/patients" class="stat-card" style="text-decoration:none;color:inherit">
+    <div class="sc-icon" style="background:#EEF2FF;color:var(--royal)"><i class="fas fa-hospital-user"></i></div>
+    <div><div class="sc-val">{{ stats.my_patients }}</div><div class="sc-label">Total Patients</div></div>
+  </a>
+  <a href="/patients" class="stat-card" style="text-decoration:none;color:inherit">
+    <div class="sc-icon" style="background:#ECFDF5;color:var(--emerald)"><i class="fas fa-stethoscope"></i></div>
+    <div><div class="sc-val">{{ stats.visits_today }}</div><div class="sc-label">My Visits Today</div></div>
+  </a>
+  <a href="/scans" class="stat-card" style="text-decoration:none;color:inherit">
+    <div class="sc-icon" style="background:#EDE9FE;color:#7C3AED"><i class="fas fa-x-ray"></i></div>
+    <div><div class="sc-val">{{ stats.pending_scans }}</div><div class="sc-label">Total Scans</div></div>
+  </a>
+  <a href="/appointments" class="stat-card" style="text-decoration:none;color:inherit">
+    <div class="sc-icon" style="background:#FFF8E6;color:var(--gold)"><i class="fas fa-calendar-check"></i></div>
+    <div><div class="sc-val">{{ stats.appointments_today }}</div><div class="sc-label">My Appts Today</div></div>
+  </a>
+</div>
+
+<div class="content-grid">
+  <!-- Today's Visits -->
+  <div class="panel">
+    <div class="panel-header">
+      <div><h3>Today's Patient Visits</h3><p>Active visits assigned to you</p></div>
+      <a href="/patients" class="btn btn-primary btn-sm"><i class="fas fa-search"></i> Find Patient</a>
+    </div>
+    <div class="panel-body" style="padding:0">
+      <table class="data-table">
+        <thead><tr><th>Patient</th><th>Reason</th><th>Time</th><th>Status</th><th>Action</th></tr></thead>
+        <tbody>
+          {% for v in today_visits %}
+          <tr>
+            <td><strong>{{ v.patient.full_name }}</strong><br><small style="color:var(--slate)">{{ v.patient.patient_id }}</small></td>
+            <td style="font-size:13px">{{ v.reason or '—' }}</td>
+            <td style="font-size:12px;color:var(--slate)">{{ v.visit_date.strftime('%I:%M %p') }}</td>
+            <td><span class="status-badge status-{{ v.status }}">{{ v.status.title() }}</span></td>
+            <td>
+              <a href="/patients/{{ v.patient_id }}" class="btn btn-outline btn-sm"><i class="fas fa-eye"></i> View & Prescribe</a>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="5" style="text-align:center;color:var(--slate);padding:32px">No visits today. Check-in a patient from Reception.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:24px">
+    <!-- Today's Appointments -->
+    <div class="panel">
+      <div class="panel-header"><div><h3>Today's Appointments</h3><p>Assigned to you today</p></div><a href="/appointments" class="btn btn-outline btn-sm">All</a></div>
+      <div class="panel-body" style="padding:0">
+        <table class="data-table">
+          <thead><tr><th>Patient</th><th>Reason</th><th>Status</th><th>Action</th></tr></thead>
+          <tbody>
+            {% for a in today_appts %}
+            <tr>
+              <td><strong>{{ a.patient_name }}</strong><br><small style="color:var(--slate)">{{ a.phone }}</small></td>
+              <td style="font-size:12px">{{ a.reason or '—' }}</td>
+              <td><span class="status-badge status-{{ a.status }}">{{ a.status.title() }}</span></td>
+              <td><a href="/appointments/{{ a.id }}" class="btn btn-outline btn-sm"><i class="fas fa-eye"></i></a></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="4" style="text-align:center;color:var(--slate);padding:20px">No appointments assigned today.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="panel">
+      <div class="panel-header"><div><h3>Quick Actions</h3></div></div>
+      <div class="panel-body">
+        <div class="quick-actions">
+          <a href="/patients" class="qa-card">
+            <div class="qa-icon" style="background:#EEF2FF;color:var(--royal)"><i class="fas fa-search"></i></div>
+            <div><div class="qa-label">Find Patient</div><div class="qa-sub">View & prescribe</div></div>
+          </a>
+          <a href="/scans/upload" class="qa-card">
+            <div class="qa-icon" style="background:#EDE9FE;color:#7C3AED"><i class="fas fa-upload"></i></div>
+            <div><div class="qa-label">Upload Scan</div><div class="qa-sub">Encrypt & store</div></div>
+          </a>
+          <a href="/reports/upload" class="qa-card">
+            <div class="qa-icon" style="background:#ECFDF5;color:var(--emerald)"><i class="fas fa-file-arrow-up"></i></div>
+            <div><div class="qa-label">Upload Report</div><div class="qa-sub">Lab results</div></div>
+          </a>
+          <a href="/reports" class="qa-card">
+            <div class="qa-icon" style="background:#FFF8E6;color:var(--gold)"><i class="fas fa-file-medical"></i></div>
+            <div><div class="qa-label">Lab Reports</div><div class="qa-sub">View all</div></div>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Scans -->
+    <div class="panel">
+      <div class="panel-header"><div><h3>Recent Scans</h3><p>Latest encrypted images</p></div><a href="/scans" class="btn btn-outline btn-sm">All Scans</a></div>
+      <div class="panel-body">
+        {% for s in recent_scans %}
+        <div class="activity-item">
+          <div class="act-dot" style="background:#EDE9FE;color:#7C3AED"><i class="fas fa-x-ray"></i></div>
+          <div>
+            <div class="act-title">{{ s.scan_type }} — {{ s.body_part or '—' }}</div>
+            <div class="act-sub">{{ s.patient.full_name if s.patient else '—' }}</div>
+          </div>
+          <a href="/scans/{{ s.id }}/view" class="btn btn-outline btn-sm" style="font-size:11px">View</a>
+        </div>
+        {% else %}
+        <p style="text-align:center;color:var(--slate);font-size:13px">No scans yet.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

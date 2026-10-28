@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+{% block title %}View Scan — MediVault{% endblock %}
+{% block page_title %}Medical Scan Viewer{% endblock %}
+{% block page_subtitle %}{{ scan.scan_type }} · {{ scan.body_part }} · {{ patient.full_name }}{% endblock %}
+
+{% block sidebar_nav %}
+<div class="nav-section-label">Imaging</div>
+<a href="/dashboard" class="nav-item"><i class="fas fa-gauge-high"></i> Dashboard</a>
+<a href="/scans/upload" class="nav-item"><i class="fas fa-upload"></i> Upload Scan</a>
+<a href="/patients/{{ patient.id }}" class="nav-item active"><i class="fas fa-id-card"></i> {{ patient.full_name }}</a>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.scan-viewer {
+  display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-bottom:28px;
+}
+.image-panel {
+  background:var(--white); border-radius:20px; border:1px solid var(--platinum); overflow:hidden;
+}
+.ip-header {
+  padding:16px 22px; border-bottom:1px solid var(--platinum);
+  display:flex; align-items:center; justify-content:space-between;
+  background:var(--ivory);
+}
+.ip-header h3 { font-family:'Playfair Display',serif; font-size:16px; font-weight:600; color:var(--royal); }
+.ip-header .enc-badge {
+  padding:4px 12px; border-radius:100px; font-size:11px; font-weight:600; letter-spacing:0.5px;
+  display:flex; align-items:center; gap:6px;
+}
+.enc-badge.encrypted { background:#EDE9FE; color:#5B21B6; }
+.enc-badge.decrypted { background:#DCFCE7; color:#166534; }
+.image-frame {
+  padding:20px; display:flex; align-items:center; justify-content:center;
+  background:linear-gradient(135deg,var(--royal-deep),#0A1628);
+  min-height:320px; position:relative;
+}
+.image-frame img {
+  max-width:100%; max-height:320px; border-radius:10px;
+  object-fit:contain; display:block;
+}
+.image-placeholder {
+  text-align:center; color:rgba(255,255,255,0.3);
+}
+.image-placeholder i { font-size:48px; margin-bottom:12px; display:block; }
+.image-placeholder p { font-size:13px; }
+
+/* Metrics panel */
+.metrics-panel {
+  background:var(--white); border-radius:20px; border:1px solid var(--platinum);
+  overflow:hidden; margin-bottom:24px;
+}
+.mp-header { padding:18px 24px; border-bottom:1px solid var(--platinum); background:var(--ivory); display:flex; align-items:center; gap:12px; }
+.mp-header h3 { font-family:'Playfair Display',serif; font-size:17px; font-weight:600; color:var(--royal); }
+.mp-body { padding:24px; }
+.metrics-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
+.metric-card {
+  background:var(--ivory); border-radius:14px; padding:18px; text-align:center;
+  border:1px solid var(--platinum); transition:all 0.2s;
+}
+.metric-card:hover { border-color:var(--gold); }
+.metric-val   { font-family:'Playfair Display',serif; font-size:26px; font-weight:700; color:var(--royal); }
+.metric-label { font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:var(--slate); margin-top:4px; }
+.metric-badge { margin-top:8px; display:inline-block; }
+
+/* Key info */
+.key-info {
+  background:linear-gradient(135deg,var(--royal-deep),var(--royal));
+  border-radius:16px; padding:20px 24px; color:var(--white);
+  display:flex; align-items:flex-start; gap:16px; margin-bottom:24px;
+}
+.ki-icon { width:44px; height:44px; background:rgba(201,168,76,0.2); border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:18px; color:var(--gold-light); flex-shrink:0; }
+.ki-label { font-size:10px; letter-spacing:2px; text-transform:uppercase; color:rgba(255,255,255,0.55); }
+.ki-val   { font-family:monospace; font-size:13px; color:var(--gold-light); margin-top:4px; word-break:break-all; }
+
+.patient-strip {
+  background:var(--white); border-radius:16px; border:1px solid var(--platinum);
+  padding:18px 22px; display:flex; align-items:center; gap:16px; margin-bottom:24px;
+}
+.ps-avatar {
+  width:48px; height:48px; border-radius:12px;
+  background:linear-gradient(135deg,var(--royal),var(--teal));
+  display:flex; align-items:center; justify-content:center;
+  color:var(--white); font-family:'Playfair Display',serif; font-size:20px; font-weight:700;
+}
+.ps-name { font-family:'Playfair Display',serif; font-size:17px; font-weight:600; color:var(--royal); }
+.ps-sub  { font-size:12px; color:var(--slate); margin-top:2px; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Patient Strip -->
+<div class="patient-strip">
+  <div class="ps-avatar">{{ patient.full_name[0] }}</div>
+  <div>
+    <div class="ps-name">{{ patient.full_name }}</div>
+    <div class="ps-sub">{{ patient.patient_id }} · {{ patient.date_of_birth }} · {{ patient.blood_group or '—' }}</div>
+  </div>
+  <div style="margin-left:auto;display:flex;gap:10px">
+    <a href="/patients/{{ patient.id }}" class="btn btn-outline btn-sm"><i class="fas fa-arrow-left"></i> Patient Profile</a>
+    {% if dec_available %}
+    <a href="/scans/{{ scan.id }}/download" class="btn btn-gold btn-sm"><i class="fas fa-download"></i> Download Decrypted</a>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Key Info -->
+<div class="key-info">
+  <div class="ki-icon"><i class="fas fa-key"></i></div>
+  <div style="flex:1">
+    <div class="ki-label">Encryption Key Derivation</div>
+    <div class="ki-val">{{ key_preview }}</div>
+    <div style="font-size:12px;color:rgba(255,255,255,0.55);margin-top:8px">
+      Derived from: <strong style="color:rgba(255,255,255,0.8)">{{ patient.patient_id }}</strong>
+      + <strong style="color:rgba(255,255,255,0.8)">{{ patient.date_of_birth }}</strong>
+      + <strong style="color:rgba(255,255,255,0.8)">{{ patient.hospital_id }}</strong>
+      → SHA-256 → Chaotic Logistic Map
+    </div>
+  </div>
+  <div style="text-align:right">
+    <div class="ki-label">Scan Type</div>
+    <div style="font-size:20px;font-weight:700;color:var(--gold-light);margin-top:4px">{{ scan.scan_type }}</div>
+    <div style="font-size:13px;color:rgba(255,255,255,0.65)">{{ scan.body_part }}</div>
+  </div>
+</div>
+
+<!-- Scan Viewer (side by side) -->
+<div class="scan-viewer">
+
+  <!-- Encrypted -->
+  <div class="image-panel">
+    <div class="ip-header">
+      <h3><i class="fas fa-lock" style="color:#7C3AED;margin-right:8px"></i>Encrypted Image</h3>
+      <span class="enc-badge encrypted"><i class="fas fa-lock"></i> Stored Encrypted</span>
+    </div>
+    <div class="image-frame">
+      {% if scan.encrypted_path %}
+      <img src="/scans/{{ scan.id }}/encrypted-image" alt="Encrypted scan" id="enc-img"/>
+      {% else %}
+      <div class="image-placeholder">
+        <i class="fas fa-lock"></i>
+        <p>Encrypted image not available</p>
+      </div>
+      {% endif %}
+    </div>
+    <div style="padding:14px 20px;border-top:1px solid var(--platinum);font-size:12px;color:var(--slate)">
+      <i class="fas fa-calendar"></i> Uploaded {{ scan.uploaded_at.strftime('%d %b %Y, %I:%M %p') }}
+      {% if scan.notes %}<br><i class="fas fa-note-sticky"></i> {{ scan.notes }}{% endif %}
+    </div>
+  </div>
+
+  <!-- Decrypted -->
+  <div class="image-panel">
+    <div class="ip-header">
+      <h3><i class="fas fa-unlock" style="color:var(--emerald);margin-right:8px"></i>Decrypted Image</h3>
+      {% if dec_available %}
+      <span class="enc-badge decrypted"><i class="fas fa-unlock"></i> Decrypted</span>
+      {% else %}
+      <span class="enc-badge" style="background:#FEF3C7;color:#92400E"><i class="fas fa-exclamation-triangle"></i> Pending Training</span>
+      {% endif %}
+    </div>
+    <div class="image-frame">
+      {% if dec_available and dec_filename %}
+      <img src="/decrypted/{{ dec_filename }}" alt="Decrypted scan"/>
+      {% else %}
+      <div class="image-placeholder">
+        <i class="fas fa-brain"></i>
+        <p>{{ 'Train the model first (run train_model.py)' if not dec_available else 'Decryption failed' }}</p>
+      </div>
+      {% endif %}
+    </div>
+    <div style="padding:14px 20px;border-top:1px solid var(--platinum);font-size:12px;color:var(--slate)">
+      {% if dec_available %}
+      <i class="fas fa-check-circle" style="color:var(--emerald)"></i> Auto-decrypted using derived key — no password required
+      {% else %}
+      <i class="fas fa-info-circle" style="color:var(--gold)"></i> Decryption available after model training
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Metrics -->
+{% if metrics and metrics.status == 'success' %}
+<div class="metrics-panel">
+  <div class="mp-header">
+    <div style="width:36px;height:36px;background:#ECFDF5;border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--emerald)"><i class="fas fa-chart-line"></i></div>
+    <h3>Encryption Quality Metrics</h3>
+  </div>
+  <div class="mp-body">
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-val">{{ metrics.psnr|round(2) }}</div>
+        <div class="metric-label">PSNR (dB)</div>
+        <span class="metric-badge status-badge status-active">Recovery Quality</span>
+      </div>
+      <div class="metric-card">
+        <div class="metric-val">{{ metrics.entropy|round(3) }}</div>
+        <div class="metric-label">Entropy (bits)</div>
+        <span class="metric-badge status-badge {% if metrics.entropy > 7.5 %}status-active{% else %}status-pending{% endif %}">
+          {% if metrics.entropy > 7.5 %}Excellent{% elif metrics.entropy > 7.0 %}Good{% else %}Moderate{% endif %}
+        </span>
+      </div>
+      <div class="metric-card">
+        <div class="metric-val">SHA-256</div>
+        <div class="metric-label">Key Algorithm</div>
+        <span class="metric-badge status-badge status-encrypted">Chaotic Map</span>
+      </div>
+      <div class="metric-card">
+        <div class="metric-val"><i class="fas fa-check" style="color:var(--emerald)"></i></div>
+        <div class="metric-label">Key Derivation</div>
+        <span class="metric-badge status-badge status-active">Auto (No Password)</span>
+      </div>
+    </div>
+    <div style="margin-top:16px;padding:14px 18px;background:var(--ivory);border-radius:12px;font-size:13px;color:var(--slate)">
+      <i class="fas fa-info-circle" style="color:var(--teal)"></i>
+      <strong>Interpreting metrics:</strong>
+      Encrypted PSNR should be <strong>low</strong> (high distortion = good encryption).
+      Decrypted PSNR should be <strong>high ≥35 dB</strong> (good recovery).
+      Entropy near <strong>8.0</strong> means pixel values are uniformly distributed (random-like = strong encryption).
+    </div>
+  </div>
+</div>
+{% else %}
+<div style="background:var(--gold-pale);border:1px solid rgba(201,168,76,0.3);border-radius:14px;padding:18px 22px;display:flex;gap:14px;align-items:flex-start">
+  <i class="fas fa-triangle-exclamation" style="color:var(--gold);font-size:20px;margin-top:2px"></i>
+  <div>
+    <div style="font-weight:600;color:var(--royal);font-size:14px">Model Not Trained Yet</div>
+    <div style="font-size:13px;color:var(--slate);margin-top:6px;line-height:1.7">
+      To enable full encryption/decryption, run:<br>
+      <code style="background:var(--royal-deep);color:var(--gold-light);padding:4px 10px;border-radius:6px;font-size:13px">python train_model.py</code>
+      <br><br>Add MRI images to the <code>dataset/</code> folder first (min 50 images recommended).
+      Download from <a href="https://www.kaggle.com/datasets/navoneel/brain-mri-images-for-brain-tumor-detection" target="_blank" style="color:var(--royal)">Kaggle Brain MRI dataset</a>.
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

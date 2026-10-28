@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Radiologist Dashboard — MediVault{% endblock %}
+{% block page_title %}Radiology Centre{% endblock %}
+{% block page_subtitle %}Medical scan encryption & management{% endblock %}
+
+{% block sidebar_nav %}
+<div class="nav-section-label">Imaging</div>
+<a href="/dashboard" class="nav-item active"><i class="fas fa-gauge-high"></i> Dashboard</a>
+<a href="/scans/upload" class="nav-item"><i class="fas fa-upload"></i> Upload & Encrypt</a>
+<a href="/scans" class="nav-item"><i class="fas fa-x-ray"></i> All Scans</a>
+<a href="/metrics" class="nav-item"><i class="fas fa-chart-line"></i> Encryption Metrics</a>
+<div class="nav-section-label">Patients</div>
+<a href="/patients" class="nav-item"><i class="fas fa-hospital-user"></i> Patient List</a>
+<a href="/reports" class="nav-item"><i class="fas fa-file-medical"></i> Reports</a>
+{% endblock %}
+
+{% block content %}
+<div class="stat-cards">
+  <a href="/scans" class="stat-card" style="text-decoration:none;color:inherit">
+    <div class="sc-icon" style="background:#EDE9FE;color:#7C3AED"><i class="fas fa-lock"></i></div>
+    <div><div class="sc-val">{{ stats.total_encrypted }}</div><div class="sc-label">Scans Encrypted</div><div class="sc-change up">All secured</div></div>
+  </a>
+  <a href="/scans" class="stat-card" style="text-decoration:none;color:inherit">
+    <div class="sc-icon" style="background:#EEF2FF;color:var(--royal)"><i class="fas fa-upload"></i></div>
+    <div><div class="sc-val">{{ stats.uploaded_today }}</div><div class="sc-label">Uploaded Today</div></div>
+  </a>
+  <a href="/metrics" class="stat-card" style="text-decoration:none;color:inherit">
+    <div class="sc-icon" style="background:#ECFDF5;color:var(--emerald)"><i class="fas fa-chart-simple"></i></div>
+    <div><div class="sc-val">{{ stats.avg_psnr }}</div><div class="sc-label">Avg PSNR (dB)</div></div>
+  </a>
+  <a href="/scans" class="stat-card" style="text-decoration:none;color:inherit">
+    <div class="sc-icon" style="background:#FFF8E6;color:var(--gold)"><i class="fas fa-x-ray"></i></div>
+    <div><div class="sc-val">{{ stats.scan_types }}</div><div class="sc-label">Scan Types</div></div>
+  </a>
+</div>
+
+<div class="content-grid">
+  <div class="panel">
+    <div class="panel-header">
+      <div><h3>Recent Encrypted Scans</h3><p>Click any row to view encrypted vs decrypted</p></div>
+      <a href="/scans/upload" class="btn btn-primary btn-sm"><i class="fas fa-upload"></i> Upload New</a>
+    </div>
+    <div class="panel-body" style="padding:0">
+      <table class="data-table">
+        <thead><tr><th>Patient</th><th>Type</th><th>Body Part</th><th>Date</th><th>Status</th><th>Action</th></tr></thead>
+        <tbody>
+          {% for s in recent_scans %}
+          <tr style="cursor:pointer" onclick="location.href='/scans/{{ s.id }}/view'">
+            <td><strong>{{ s.patient.full_name if s.patient else '—' }}</strong><br><small style="color:var(--slate)">{{ s.patient.patient_id if s.patient else '' }}</small></td>
+            <td><span class="status-badge status-discharged">{{ s.scan_type }}</span></td>
+            <td style="font-size:13px">{{ s.body_part or '—' }}</td>
+            <td style="font-size:12px;color:var(--slate)">{{ s.uploaded_at.strftime('%d %b %Y') }}</td>
+            <td><span class="status-badge status-encrypted"><i class="fas fa-lock"></i> Encrypted</span></td>
+            <td><a href="/scans/{{ s.id }}/view" class="btn btn-outline btn-sm" onclick="event.stopPropagation()"><i class="fas fa-eye"></i> View</a></td>
+          </tr>
+          {% else %}
+          <tr><td colspan="6" style="text-align:center;color:var(--slate);padding:32px">No scans uploaded yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header"><div><h3>Quick Upload by Type</h3><p>Encrypt a scan right now</p></div></div>
+    <div class="panel-body">
+      <div class="quick-actions">
+        <a href="/scans/upload?scan_type=MRI" class="qa-card">
+          <div class="qa-icon" style="background:#EDE9FE;color:#7C3AED"><i class="fas fa-brain"></i></div>
+          <div><div class="qa-label">MRI Scan</div><div class="qa-sub">Brain / Spine</div></div>
+        </a>
+        <a href="/scans/upload?scan_type=X-Ray" class="qa-card">
+          <div class="qa-icon" style="background:#EEF2FF;color:var(--royal)"><i class="fas fa-x-ray"></i></div>
+          <div><div class="qa-label">X-Ray</div><div class="qa-sub">Chest / Bone</div></div>
+        </a>
+        <a href="/scans/upload?scan_type=CT" class="qa-card">
+          <div class="qa-icon" style="background:#ECFDF5;color:var(--emerald)"><i class="fas fa-lungs"></i></div>
+          <div><div class="qa-label">CT Scan</div><div class="qa-sub">Full body</div></div>
+        </a>
+        <a href="/metrics" class="qa-card">
+          <div class="qa-icon" style="background:#FFF8E6;color:var(--gold)"><i class="fas fa-chart-line"></i></div>
+          <div><div class="qa-label">Metrics</div><div class="qa-sub">PSNR / SSIM</div></div>
+        </a>
+      </div>
+      <div style="margin-top:20px;padding:14px 16px;background:var(--ivory);border-radius:12px;font-size:13px;color:var(--slate)">
+        <i class="fas fa-info-circle" style="color:var(--teal)"></i>
+        <strong>Note:</strong> Encrypted and decrypted images will look visually different only after the CNN model is trained.
+        Run <code style="background:var(--royal-deep);color:var(--gold-light);padding:2px 8px;border-radius:4px">python train_model.py</code> to enable full encryption.
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

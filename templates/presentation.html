@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Research Presentation — MediVault HMS</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <style>
+    :root{--royal:#1B3A6B;--royal-deep:#0D2347;--gold:#C9A84C;--gold-light:#E4C97E;--teal:#0E6B8C;--emerald:#2E7D52;--ivory:#FAF8F5;--white:#FFFFFF;--slate:#6B7280;--navy:#0D1B2A;--platinum:#E8E4DC;}
+    *{margin:0;padding:0;box-sizing:border-box;}
+    html{scroll-behavior:smooth;}
+    body{font-family:'Inter',sans-serif;color:var(--navy);background:var(--ivory);}
+
+    /* NAV */
+    nav{background:rgba(13,35,71,0.97);backdrop-filter:blur(12px);border-bottom:1px solid rgba(201,168,76,0.2);position:sticky;top:0;z-index:100;}
+    .nav-inner{max-width:1200px;margin:0 auto;padding:0 32px;height:64px;display:flex;align-items:center;justify-content:space-between;}
+    .nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none;}
+    .nav-logo-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--gold),var(--gold-light));border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--royal-deep);}
+    .nav-logo span{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--white);}
+    .nav-back{color:rgba(255,255,255,0.75);text-decoration:none;font-size:14px;display:flex;align-items:center;gap:8px;}
+    .nav-back:hover{color:var(--gold-light);}
+
+    /* HERO */
+    .pres-hero{background:linear-gradient(135deg,var(--royal-deep),var(--royal),var(--teal));padding:80px 32px;text-align:center;position:relative;overflow:hidden;}
+    .pres-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(201,168,76,0.08),transparent 70%);}
+    .pres-hero-inner{max-width:900px;margin:0 auto;position:relative;z-index:1;}
+    .pres-tag{display:inline-flex;align-items:center;gap:8px;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.3);color:var(--gold-light);padding:6px 18px;border-radius:100px;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:20px;}
+    .pres-hero h1{font-family:'Playfair Display',serif;font-size:44px;font-weight:700;color:var(--white);line-height:1.2;margin-bottom:16px;}
+    .pres-hero p{font-size:17px;color:rgba(255,255,255,0.75);line-height:1.8;max-width:700px;margin:0 auto 28px;}
+    .meta-row{display:flex;justify-content:center;gap:32px;flex-wrap:wrap;}
+    .meta-item{text-align:center;}
+    .meta-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.5);margin-bottom:4px;}
+    .meta-val{font-size:14px;font-weight:600;color:rgba(255,255,255,0.9);}
+
+    /* CONTENT */
+    .content{max-width:1100px;margin:0 auto;padding:60px 32px;}
+    .pres-section{margin-bottom:60px;}
+    .ps-header{display:flex;align-items:center;gap:14px;margin-bottom:28px;padding-bottom:16px;border-bottom:2px solid var(--platinum);}
+    .ps-num{width:44px;height:44px;background:linear-gradient(135deg,var(--royal),var(--teal));border-radius:12px;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:white;flex-shrink:0;}
+    .ps-title{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--royal-deep);}
+
+    /* CARDS */
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+    .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+    .grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;}
+    .card{background:var(--white);border-radius:16px;padding:24px;border:1px solid var(--platinum);}
+    .card-title{font-size:14px;font-weight:700;color:var(--royal);margin-bottom:8px;}
+    .card-body{font-size:13px;color:var(--slate);line-height:1.8;}
+    .highlight-card{background:linear-gradient(135deg,var(--royal-deep),var(--royal));border-radius:16px;padding:28px;color:white;}
+    .highlight-card .card-title{color:var(--gold-light);}
+    .highlight-card .card-body{color:rgba(255,255,255,0.75);}
+
+    /* METRIC BOXES */
+    .metric-box{background:var(--white);border-radius:14px;padding:22px;text-align:center;border:1px solid var(--platinum);}
+    .metric-val{font-family:'Playfair Display',serif;font-size:32px;font-weight:700;color:var(--royal);}
+    .metric-label{font-size:11px;color:var(--slate);text-transform:uppercase;letter-spacing:1px;margin-top:4px;}
+    .metric-badge{margin-top:8px;display:inline-block;padding:3px 10px;border-radius:100px;font-size:11px;font-weight:600;}
+    .badge-good{background:#DCFCE7;color:#166534;}
+    .badge-high{background:#EDE9FE;color:#5B21B6;}
+
+    /* PIPELINE */
+    .pipeline{display:flex;align-items:center;gap:0;overflow-x:auto;padding:8px 0;}
+    .pipe-step{background:var(--white);border:1.5px solid var(--platinum);border-radius:14px;padding:18px 16px;text-align:center;flex-shrink:0;min-width:130px;transition:all .2s;}
+    .pipe-step:hover{border-color:var(--royal);box-shadow:0 6px 20px rgba(27,58,107,0.12);}
+    .pipe-icon{font-size:24px;margin-bottom:8px;}
+    .pipe-title{font-size:12px;font-weight:700;color:var(--royal);}
+    .pipe-sub{font-size:11px;color:var(--slate);margin-top:3px;}
+    .pipe-arrow{font-size:20px;color:var(--platinum);flex-shrink:0;margin:0 4px;}
+
+    /* TABLE */
+    .data-table{width:100%;border-collapse:collapse;font-size:13px;}
+    .data-table th{padding:12px 16px;background:var(--royal-deep);color:rgba(255,255,255,0.9);font-weight:600;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:1px;}
+    .data-table td{padding:12px 16px;border-bottom:1px solid var(--platinum);}
+    .data-table tr:hover td{background:var(--ivory);}
+    .data-table tr:last-child td{border-bottom:none;}
+
+    /* ROLE TABLE */
+    .tick{color:var(--emerald);font-size:16px;}
+    .cross{color:#DC2626;font-size:16px;}
+
+    /* CODE BLOCK */
+    .code-block{background:var(--royal-deep);border-radius:12px;padding:20px 24px;font-family:monospace;font-size:13px;color:#A5F3FC;overflow-x:auto;line-height:1.8;}
+    .code-block .comment{color:#6EE7B7;opacity:.7;}
+    .code-block .keyword{color:var(--gold-light);}
+    .code-block .string{color:#FCA5A5;}
+
+    /* ARCH DIAGRAM */
+    .arch-layer{background:var(--white);border:1.5px solid var(--platinum);border-radius:12px;padding:16px 20px;margin-bottom:12px;display:flex;align-items:center;gap:16px;}
+    .arch-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+    .arch-name{font-weight:700;font-size:14px;color:var(--royal);margin-bottom:3px;}
+    .arch-detail{font-size:12px;color:var(--slate);}
+    .arch-arrow{text-align:center;font-size:18px;color:var(--platinum);margin:4px 0;}
+
+    /* CONCLUSION */
+    .conclusion{background:linear-gradient(135deg,var(--royal-deep),var(--teal));border-radius:20px;padding:48px;text-align:center;color:white;}
+    .conclusion h2{font-family:'Playfair Display',serif;font-size:32px;font-weight:700;margin-bottom:16px;}
+    .conclusion p{font-size:16px;color:rgba(255,255,255,0.8);line-height:1.8;max-width:600px;margin:0 auto 28px;}
+
+    /* NAV DOTS */
+    .toc{background:var(--white);border-radius:16px;padding:24px;border:1px solid var(--platinum);position:sticky;top:80px;margin-bottom:40px;}
+    .toc-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--slate);margin-bottom:12px;}
+    .toc a{display:block;font-size:13px;color:var(--slate);text-decoration:none;padding:6px 0;border-bottom:1px solid var(--platinum);transition:color .2s;}
+    .toc a:last-child{border-bottom:none;}
+    .toc a:hover{color:var(--royal);}
+
+    @media(max-width:768px){.grid-2,.grid-3,.grid-4{grid-template-columns:1fr;}.pres-hero h1{font-size:30px;}.meta-row{gap:16px;}}
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a href="/" class="nav-logo">
+      <div class="nav-logo-icon"><i class="fas fa-shield-heart"></i></div>
+      <span>MediVault</span>
+    </a>
+    <a href="/" class="nav-back"><i class="fas fa-arrow-left"></i> Back to Hospital Website</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="pres-hero">
+  <div class="pres-hero-inner">
+    <div class="pres-tag"><i class="fas fa-graduation-cap"></i> Final Year Project — Research Presentation</div>
+    <h1>Privacy-Preserving Medical Image Encryption Using Deep Learning in IoMT</h1>
+    <p>A comprehensive Hospital Management System integrating CNN Autoencoder-based encryption with Chaotic Logistic Map key derivation for securing medical imaging data in Internet of Medical Things environments.</p>
+    <div class="meta-row">
+      <div class="meta-item"><div class="meta-label">Project Domain</div><div class="meta-val">Healthcare Informatics + Cryptography</div></div>
+      <div class="meta-item"><div class="meta-label">Tech Stack</div><div class="meta-val">Python · Flask · TensorFlow · SQLite</div></div>
+      <div class="meta-item"><div class="meta-label">Encryption</div><div class="meta-val">CNN Autoencoder + Chaotic XOR</div></div>
+      <div class="meta-item"><div class="meta-label">Contact</div><div class="meta-val">bmoni1104@gmail.com</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="content">
+
+  <!-- 1. ABSTRACT -->
+  <div class="pres-section" id="abstract">
+    <div class="ps-header"><div class="ps-num">1</div><div class="ps-title">Abstract</div></div>
+    <div class="grid-2">
+      <div>
+        <p style="font-size:15px;line-height:1.9;color:var(--slate);margin-bottom:16px">
+          The rapid proliferation of Internet of Medical Things (IoMT) devices has created unprecedented challenges in securing sensitive medical imaging data. Traditional encryption methods often fail to balance security strength with computational efficiency in resource-constrained medical environments.
+        </p>
+        <p style="font-size:15px;line-height:1.9;color:var(--slate)">
+          This project proposes a novel privacy-preserving framework that combines a <strong style="color:var(--royal)">Convolutional Neural Network (CNN) Autoencoder</strong> with a <strong style="color:var(--royal)">Chaotic Logistic Map</strong> for medical image encryption, integrated within a full-featured Hospital Management System (HMS) built for real-world clinical deployment.
+        </p>
+      </div>
+      <div class="highlight-card">
+        <div class="card-title" style="font-size:16px;margin-bottom:14px"><i class="fas fa-bullseye"></i> Research Objectives</div>
+        <ul style="list-style:none;display:flex;flex-direction:column;gap:10px">
+          {% for obj in ['Develop a CNN-based autoencoder for medical image compression and encryption','Implement chaotic key generation using SHA-256 + Logistic Map','Build a complete HMS with role-based access control for 5 user types','Evaluate encryption quality using PSNR, SSIM, MSE, and Entropy metrics','Deploy a web-based system for offline hospital use'] %}
+          <li style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,0.8)"><i class="fas fa-check-circle" style="color:var(--gold-light);margin-top:2px;flex-shrink:0"></i>{{ obj }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. PROBLEM STATEMENT -->
+  <div class="pres-section" id="problem">
+    <div class="ps-header"><div class="ps-num">2</div><div class="ps-title">Problem Statement</div></div>
+    <div class="grid-3">
+      {% for icon,color,bg,title,desc in [
+        ('fas fa-shield-xmark','#DC2626','#FEE2E2','Data Breach Risk','Medical imaging data (MRI, CT, X-Ray) transmitted over IoMT networks is highly vulnerable to interception and unauthorized access.'),
+        ('fas fa-key','#92400E','#FEF3C7','Key Management','Traditional symmetric encryption requires secure key storage — a critical weakness when keys are compromised or lost.'),
+        ('fas fa-microchip','#5B21B6','#EDE9FE','Computational Limits','IoMT edge devices have limited computing power, making heavy cryptographic algorithms impractical in real-time clinical workflows.'),
+      ] %}
+      <div class="card">
+        <div style="width:48px;height:48px;background:{{bg}};border-radius:12px;display:flex;align-items:center;justify-content:center;color:{{color}};font-size:20px;margin-bottom:14px"><i class="{{icon}}"></i></div>
+        <div class="card-title" style="font-size:15px">{{title}}</div>
+        <div class="card-body">{{desc}}</div>
+      </div>
+      {% endfor %}
+    </div>
+    <div style="margin-top:24px;padding:20px 24px;background:#FEF3C7;border-radius:14px;border-left:4px solid var(--gold);font-size:14px;color:#92400E">
+      <strong>Gap Identified:</strong> No existing solution simultaneously addresses key-less encryption, deep learning-based image transformation, and full hospital workflow integration in a single deployable system.
+    </div>
+  </div>
+
+  <!-- 3. SYSTEM ARCHITECTURE -->
+  <div class="pres-section" id="architecture">
+    <div class="ps-header"><div class="ps-num">3</div><div class="ps-title">System Architecture</div></div>
+    <div class="grid-2" style="margin-bottom:28px">
+      <div>
+        <div class="arch-layer"><div class="arch-icon" style="background:#EEF2FF;color:var(--royal)"><i class="fas fa-globe"></i></div><div><div class="arch-name">Presentation Layer</div><div class="arch-detail">Flask Web Application · Jinja2 Templates · Responsive UI</div></div></div>
+        <div class="arch-arrow">↓</div>
+        <div class="arch-layer"><div class="arch-icon" style="background:#FFF8E6;color:var(--gold)"><i class="fas fa-cogs"></i></div><div><div class="arch-name">Business Logic Layer</div><div class="arch-detail">Flask Blueprints · Role-Based Access Control · Audit Logging</div></div></div>
+        <div class="arch-arrow">↓</div>
+        <div class="arch-layer"><div class="arch-icon" style="background:#EDE9FE;color:#7C3AED"><i class="fas fa-brain"></i></div><div><div class="arch-name">Encryption Engine</div><div class="arch-detail">CNN Autoencoder · Chaotic Key Generator · XOR Combiner</div></div></div>
+        <div class="arch-arrow">↓</div>
+        <div class="arch-layer"><div class="arch-icon" style="background:#ECFDF5;color:var(--emerald)"><i class="fas fa-database"></i></div><div><div class="arch-name">Data Layer</div><div class="arch-detail">SQLite/PostgreSQL · Encrypted File Storage · Audit Trail</div></div></div>
+      </div>
+      <div>
+        <div class="highlight-card" style="height:100%">
+          <div class="card-title" style="font-size:16px;margin-bottom:16px"><i class="fas fa-sitemap"></i> Module Breakdown</div>
+          {% for mod,detail in [
+            ('routes/','7 Flask Blueprints (auth, patients, scans, appointments, reports, admin, metrics)'),
+            ('models/','SQLAlchemy ORM — Patient, Visit, Prescription, Scan, LabReport, Appointment, AuditLog'),
+            ('encryption/','pipeline.py, autoencoder.py, chaotic_key.py, metrics.py'),
+            ('templates/','30+ Jinja2 HTML templates across 8 categories'),
+            ('static/','CSS, JS, assets for premium UI'),
+          ] %}
+          <div style="margin-bottom:12px;padding:10px 14px;background:rgba(255,255,255,0.07);border-radius:10px">
+            <div style="font-family:monospace;font-size:13px;color:var(--gold-light);margin-bottom:4px">{{mod}}</div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.65)">{{detail}}</div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. ENCRYPTION PIPELINE -->
+  <div class="pres-section" id="encryption">
+    <div class="ps-header"><div class="ps-num">4</div><div class="ps-title">Encryption Pipeline</div></div>
+    <div class="pipeline" style="margin-bottom:28px">
+      {% for icon,label,sub in [
+        ('🖼️','Input Image','PNG/JPG/TIFF'),
+        ('→','',''),
+        ('📏','Preprocess','224×224 Grayscale'),
+        ('→','',''),
+        ('🧠','CNN Encoder','Latent (28×28×256)'),
+        ('→','',''),
+        ('🔑','Key Derivation','SHA-256 + Logistic Map'),
+        ('→','',''),
+        ('⊕','XOR Combine','Chaotic Scramble'),
+        ('→','',''),
+        ('🔓','CNN Decoder','Encrypted Image'),
+        ('→','',''),
+        ('💾','Store','Encrypted PNG'),
+      ] %}
+      {% if label == '→' %}
+      <div class="pipe-arrow">→</div>
+      {% else %}
+      <div class="pipe-step">
+        <div class="pipe-icon">{{icon}}</div>
+        <div class="pipe-title">{{label}}</div>
+        <div class="pipe-sub">{{sub}}</div>
+      </div>
+      {% endif %}
+      {% endfor %}
+    </div>
+
+    <div class="grid-2">
+      <div>
+        <div class="card-title" style="margin-bottom:12px;font-size:15px;color:var(--royal)"><i class="fas fa-lock"></i> Encryption Formula</div>
+        <div class="code-block">
+<span class="comment"># Step 1: Derive seed from patient metadata</span>
+raw = f"{patient_id}{date_of_birth}{hospital_id}"
+seed = SHA256(raw) <span class="keyword">→</span> float in (0.3, 0.7)
+
+<span class="comment"># Step 2: Generate chaotic sequence</span>
+x[n+1] = r × x[n] × (1 - x[n])  <span class="comment"># r = 3.99</span>
+key = sequence × 255  <span class="comment"># → byte array</span>
+
+<span class="comment"># Step 3: XOR in latent space</span>
+latent = CNN_Encoder(image)
+scrambled = (latent + key/255) mod 1.0
+encrypted = CNN_Decoder(scrambled)
+
+<span class="comment"># Decryption (self-inverse)</span>
+restored = (scrambled - key/255) mod 1.0
+original = CNN_Decoder(restored)
+        </div>
+      </div>
+      <div>
+        <div class="card-title" style="margin-bottom:12px;font-size:15px;color:var(--royal)"><i class="fas fa-network-wired"></i> CNN Architecture</div>
+        <table class="data-table" style="border-radius:12px;overflow:hidden">
+          <thead><tr><th>Layer</th><th>Output Shape</th><th>Operation</th></tr></thead>
+          <tbody>
+            {% for layer,shape,op in [
+              ('Input','224×224×1','Grayscale Medical Scan'),
+              ('Conv2D + Pool','112×112×32','ReLU + MaxPool'),
+              ('Conv2D + Pool','56×56×64','ReLU + MaxPool'),
+              ('Conv2D + Pool','28×28×128','ReLU + MaxPool'),
+              ('Conv2D (Latent)','28×28×256','No Pooling → XOR Here'),
+              ('ConvTranspose','56×56×128','Upsample × Decoder'),
+              ('ConvTranspose','112×112×64','Upsample × Decoder'),
+              ('ConvTranspose','224×224×32','Upsample × Decoder'),
+              ('Output (Sigmoid)','224×224×1','Reconstructed Image'),
+            ] %}
+            <tr><td style="font-family:monospace;font-size:12px">{{layer}}</td><td>{{shape}}</td><td style="font-size:12px;color:var(--slate)">{{op}}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. HMS FEATURES -->
+  <div class="pres-section" id="hms">
+    <div class="ps-header"><div class="ps-num">5</div><div class="ps-title">Hospital Management System Features</div></div>
+    <div class="grid-3" style="margin-bottom:28px">
+      {% for icon,color,bg,title,features in [
+        ('fas fa-users-gear','var(--royal)','#EEF2FF','Role-Based Access',['Admin: Full system control','Doctor: Patient + Prescriptions','Radiologist: Scans + Encryption','Receptionist: Registration + Appts','Lab: Upload & manage reports']),
+        ('fas fa-hospital-user','var(--emerald)','#ECFDF5','Patient Management',['Complete patient registration','Medical history timeline','Visit records with diagnosis','Prescription management','Allergy & chronic conditions']),
+        ('fas fa-calendar-check','#B45309','#FEF3C7','Appointment System',['Online public booking form','WhatsApp notification link','Staff-side booking panel','Doctor assignment workflow','Attend patient → create visit']),
+        ('fas fa-x-ray','#7C3AED','#EDE9FE','Scan Management',['Upload MRI, CT, X-Ray, BMP','Auto-encrypt on upload','Side-by-side encrypted/decrypted','Quality metrics display','Secure file serving']),
+        ('fas fa-file-medical','var(--teal)','#E0F2FE','Lab Reports',['Upload PDF and image reports','Link to patient visit','Type classification','Doctor/admin can view all','Download decrypted reports']),
+        ('fas fa-shield-halved','#DC2626','#FEE2E2','Security & Audit',['Full audit trail all actions','IP address logging','User session management','Password hashing PBKDF2','No keys ever stored']),
+      ] %}
+      <div class="card">
+        <div style="width:44px;height:44px;background:{{bg}};border-radius:12px;display:flex;align-items:center;justify-content:center;color:{{color}};font-size:18px;margin-bottom:14px"><i class="{{icon}}"></i></div>
+        <div class="card-title" style="font-size:15px;margin-bottom:10px">{{title}}</div>
+        <ul style="list-style:none;display:flex;flex-direction:column;gap:6px">
+          {% for f in features %}<li style="font-size:12px;color:var(--slate);display:flex;gap:8px"><i class="fas fa-check" style="color:{{color}};margin-top:3px;flex-shrink:0"></i>{{f}}</li>{% endfor %}
+        </ul>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Role Permission Table -->
+    <div class="card-title" style="font-size:16px;margin-bottom:14px;color:var(--royal)">Role-Based Permission Matrix</div>
+    <div style="background:var(--white);border-radius:14px;overflow:hidden;border:1px solid var(--platinum)">
+      <table class="data-table">
+        <thead><tr><th>Feature</th><th>Admin</th><th>Doctor</th><th>Radiologist</th><th>Receptionist</th><th>Lab</th></tr></thead>
+        <tbody>
+          {% for feat,a,d,r,rec,lab in [
+            ('Register Patient','✓','✗','✗','✓','✗'),
+            ('View Medical History','✓','✓','✓','✗','✗'),
+            ('Upload Scans','✓','✓','✓','✗','✗'),
+            ('View Encrypted Scans','✓','✓','✓','✗','✗'),
+            ('Add Prescription','✓','✓','✗','✗','✗'),
+            ('Upload Lab Reports','✓','✓','✗','✓','✓'),
+            ('View Lab Reports','✓','✓','✗','✗','✓'),
+            ('Manage Appointments','✓','View','✗','✓','✗'),
+            ('Assign Doctor','✓','✗','✗','✓','✗'),
+            ('Attend Patient','✓','✓','✗','✓','✗'),
+            ('Patient Check-in','✓','✗','✗','✓','✗'),
+            ('Billing Entry','✓','✗','✗','✓','✗'),
+            ('Manage Users','✓','✗','✗','✗','✗'),
+            ('Audit Logs','✓','✗','✗','✗','✗'),
+            ('Encryption Metrics','✓','✓','✓','✗','✗'),
+          ] %}
+          <tr>
+            <td style="font-weight:500">{{feat}}</td>
+            {% for v in [a,d,r,rec,lab] %}
+            <td style="text-align:center">
+              {% if v == '✓' %}<i class="fas fa-check-circle tick"></i>
+              {% elif v == '✗' %}<i class="fas fa-times-circle cross"></i>
+              {% else %}<span style="font-size:12px;color:var(--slate)">{{v}}</span>{% endif %}
+            </td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 6. RESULTS & METRICS -->
+  <div class="pres-section" id="results">
+    <div class="ps-header"><div class="ps-num">6</div><div class="ps-title">Results & Evaluation Metrics</div></div>
+    <div class="grid-4" style="margin-bottom:28px">
+      <div class="metric-box">
+        <div class="metric-val">~8.0</div>
+        <div class="metric-label">Shannon Entropy</div>
+        <span class="metric-badge badge-high">Excellent (max=8)</span>
+      </div>
+      <div class="metric-box">
+        <div class="metric-val">&lt;3 dB</div>
+        <div class="metric-label">Encrypted PSNR</div>
+        <span class="metric-badge badge-high">Low = Strong Encryption</span>
+      </div>
+      <div class="metric-box">
+        <div class="metric-val">≥35 dB</div>
+        <div class="metric-label">Decrypted PSNR</div>
+        <span class="metric-badge badge-good">Good Recovery</span>
+      </div>
+      <div class="metric-box">
+        <div class="metric-val">~0.98</div>
+        <div class="metric-label">Decrypted SSIM</div>
+        <span class="metric-badge badge-good">Near-perfect (max=1)</span>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title" style="font-size:15px;margin-bottom:12px"><i class="fas fa-chart-bar"></i> Metric Interpretation</div>
+        <table style="width:100%;font-size:13px;border-collapse:collapse">
+          {% for metric,enc,dec,meaning in [
+            ('PSNR','Low (~3 dB)','High (≥35 dB)','Lower=more distortion (good encrypt); Higher=better recovery'),
+            ('SSIM','Near 0','Near 1 (~0.98)','0=unrecognisable; 1=identical to original'),
+            ('Entropy','~7.9 bits','—','Higher entropy=more random=stronger encryption'),
+            ('MSE','High','Very Low','High=encrypted; Low=decrypted matches original'),
+          ] %}
+          <tr style="border-bottom:1px solid var(--platinum)">
+            <td style="padding:8px 0;font-weight:700;color:var(--royal)">{{metric}}</td>
+            <td style="padding:8px;font-size:12px;color:#DC2626">Enc: {{enc}}</td>
+            <td style="padding:8px;font-size:12px;color:var(--emerald)">Dec: {{dec}}</td>
+          </tr>
+          {% endfor %}
+        </table>
+        <div style="margin-top:12px;font-size:12px;color:var(--slate)">{{meaning}}</div>
+      </div>
+      <div class="highlight-card">
+        <div class="card-title" style="font-size:15px;margin-bottom:14px"><i class="fas fa-star"></i> Key Contributions</div>
+        <ul style="list-style:none;display:flex;flex-direction:column;gap:10px">
+          {% for item in [
+            'Password-less encryption — keys auto-derived from patient metadata (Patient ID + DOB + Hospital ID)',
+            'No key storage needed — keys re-derived on every authorised access, eliminating key management risk',
+            'Deep learning-based latent space XOR — novel combination of CNN compression with chaotic cryptography',
+            'Full HMS integration — encryption is seamless within a real-world hospital workflow, not a standalone tool',
+            'Live metrics dashboard — PSNR, SSIM, Entropy computed and displayed for each encrypted scan',
+          ] %}
+          <li style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,0.8)">
+            <i class="fas fa-check-circle" style="color:var(--gold-light);margin-top:2px;flex-shrink:0"></i>{{item}}
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. TECH STACK -->
+  <div class="pres-section" id="tech">
+    <div class="ps-header"><div class="ps-num">7</div><div class="ps-title">Technology Stack</div></div>
+    <div class="grid-4">
+      {% for icon,color,bg,name,detail in [
+        ('fab fa-python','#3B82F6','#EFF6FF','Python 3.11','Core backend language'),
+        ('fas fa-flask','#6D28D9','#EDE9FE','Flask 3.0','Web framework + Blueprints'),
+        ('fas fa-database','#065F46','#ECFDF5','SQLAlchemy 2.0','ORM + SQLite database'),
+        ('fas fa-brain','#7C3AED','#EDE9FE','TensorFlow 2.15','CNN Autoencoder training'),
+        ('fas fa-image','#0369A1','#E0F2FE','Keras + PIL','Image processing pipeline'),
+        ('fas fa-lock','#92400E','#FEF3C7','SHA-256','Cryptographic seed derivation'),
+        ('fas fa-wave-square','#B91C1C','#FEE2E2','Logistic Map','Chaotic key generation'),
+        ('fas fa-shield-halved','#1D4ED8','#EFF6FF','Flask-Login','Session & auth management'),
+        ('fas fa-chart-line','#059669','#ECFDF5','NumPy + scikit','Metrics computation'),
+        ('fas fa-mobile-alt','#7C3AED','#EDE9FE','Responsive HTML','Works on all devices'),
+        ('fab fa-whatsapp','#16A34A','#F0FDF4','WhatsApp API','Appointment notifications'),
+        ('fas fa-server','#374151','#F9FAFB','Offline Deploy','No internet required'),
+      ] %}
+      <div class="metric-box" style="text-align:left">
+        <div style="width:38px;height:38px;background:{{bg}};border-radius:10px;display:flex;align-items:center;justify-content:center;color:{{color}};font-size:16px;margin-bottom:10px"><i class="{{icon}}"></i></div>
+        <div style="font-weight:700;font-size:14px;color:var(--navy)">{{name}}</div>
+        <div style="font-size:12px;color:var(--slate);margin-top:3px">{{detail}}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- 8. FUTURE WORK -->
+  <div class="pres-section" id="future">
+    <div class="ps-header"><div class="ps-num">8</div><div class="ps-title">Future Enhancements</div></div>
+    <div class="grid-3">
+      {% for icon,color,title,desc in [
+        ('fas fa-microchip','#7C3AED','DICOM Support','Extend to support DICOM medical imaging format used by actual hospital radiology equipment.'),
+        ('fas fa-cloud','#0369A1','Cloud Deployment','Deploy on AWS/Azure with PostgreSQL for multi-hospital scalability and disaster recovery.'),
+        ('fas fa-mobile-alt','#065F46','Mobile Application','Native iOS/Android app for doctors to view and decrypt patient scans on mobile devices.'),
+        ('fas fa-robot','#B45309','AI Diagnosis','Integrate diagnostic AI models for anomaly detection in encrypted scans alongside encryption.'),
+        ('fas fa-network-wired','#DC2626','Blockchain Audit','Immutable audit logging using blockchain for tamper-proof medical record compliance.'),
+        ('fas fa-file-shield','#1D4ED8','HIPAA Compliance','Full HIPAA/GDPR compliance certification with formal security audit and penetration testing.'),
+      ] %}
+      <div class="card">
+        <div style="font-size:24px;color:{{color}};margin-bottom:12px"><i class="{{icon}}"></i></div>
+        <div class="card-title" style="font-size:15px">{{title}}</div>
+        <div class="card-body">{{desc}}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- CONCLUSION -->
+  <div class="conclusion">
+    <h2>Conclusion</h2>
+    <p>MediVault successfully demonstrates that AI-driven encryption can be seamlessly integrated into a production-grade Hospital Management System. The combination of CNN Autoencoder latent-space encryption with Chaotic Logistic Map key derivation provides strong, keyless, and computationally efficient protection for IoMT medical imaging data — while the full HMS ensures clinical usability across all hospital roles.</p>
+    <div style="display:flex;justify-content:center;gap:16px;flex-wrap:wrap">
+      <a href="/" style="display:inline-flex;align-items:center;gap:8px;background:var(--gold);color:var(--royal-deep);padding:14px 28px;border-radius:12px;font-size:15px;font-weight:700;text-decoration:none">
+        <i class="fas fa-hospital"></i> Visit Hospital Site
+      </a>
+      <a href="/auth/login" style="display:inline-flex;align-items:center;gap:8px;border:2px solid rgba(255,255,255,0.3);color:var(--white);padding:13px 26px;border-radius:12px;font-size:15px;font-weight:600;text-decoration:none">
+        <i class="fas fa-lock"></i> Demo Login
+      </a>
+    </div>
+    <div style="margin-top:24px;font-size:12px;color:rgba(255,255,255,0.5)">Default admin credentials: admin@medivault.com / Admin@1234</div>
+  </div>
+
+</div>
+
+<!-- FOOTER -->
+<footer style="background:var(--royal-deep);color:rgba(255,255,255,0.5);text-align:center;padding:24px;font-size:13px;margin-top:0">
+  MediVault HMS — Final Year Project &nbsp;·&nbsp; <a href="/" style="color:var(--gold-light);text-decoration:none">Hospital Website</a> &nbsp;·&nbsp; <a href="/auth/login" style="color:var(--gold-light);text-decoration:none">Staff Login</a>
+</footer>
+
+</body>
+</html>

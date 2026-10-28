@@ -1,0 +1,350 @@
+{% extends "base.html" %}
+{% block title %}Encryption Metrics — MediVault{% endblock %}
+{% block page_title %}Encryption Metrics{% endblock %}
+{% block page_subtitle %}Deep learning encryption quality analysis{% endblock %}
+
+{% block sidebar_nav %}
+<div class="nav-section-label">Analytics</div>
+<a href="/dashboard" class="nav-item"><i class="fas fa-gauge-high"></i> Dashboard</a>
+<a href="/metrics"   class="nav-item active"><i class="fas fa-chart-line"></i> Encryption Metrics</a>
+<a href="/scans/upload" class="nav-item"><i class="fas fa-upload"></i> Upload Scan</a>
+<a href="/patients"  class="nav-item"><i class="fas fa-hospital-user"></i> Patients</a>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.metrics-header-cards {
+  display:grid; grid-template-columns:repeat(5,1fr); gap:16px; margin-bottom:28px;
+}
+.mhc {
+  background:var(--white); border-radius:14px; padding:20px;
+  border:1px solid var(--platinum); text-align:center; transition:all 0.2s;
+}
+.mhc:hover { transform:translateY(-3px); box-shadow:0 10px 30px rgba(27,58,107,0.1); }
+.mhc-val   { font-family:'Playfair Display',serif; font-size:28px; font-weight:700; color:var(--royal); }
+.mhc-label { font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:var(--slate); margin-top:4px; }
+.mhc-badge { margin-top:8px; }
+.mhc-icon  { font-size:22px; margin-bottom:8px; }
+
+.chart-grid { display:grid; grid-template-columns:1fr 1fr; gap:22px; margin-bottom:22px; }
+.chart-panel {
+  background:var(--white); border-radius:16px; border:1px solid var(--platinum); overflow:hidden;
+}
+.cp-header {
+  padding:16px 22px; border-bottom:1px solid var(--platinum); background:var(--ivory);
+  display:flex; align-items:center; justify-content:space-between;
+}
+.cp-header h3 { font-family:'Playfair Display',serif; font-size:16px; font-weight:600; color:var(--royal); }
+.cp-header p  { font-size:12px; color:var(--slate); margin-top:2px; }
+.cp-body { padding:22px; }
+canvas { max-height:280px; }
+
+.explain-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:22px; }
+.explain-card {
+  background:var(--white); border-radius:14px; padding:20px;
+  border:1px solid var(--platinum); border-top:3px solid;
+}
+.explain-card h4 { font-family:'Playfair Display',serif; font-size:16px; font-weight:600; margin-bottom:8px; }
+.explain-card p  { font-size:13px; color:var(--slate); line-height:1.7; }
+.explain-card .metric-range { margin-top:12px; font-size:12px; font-weight:600; }
+
+.table-panel { background:var(--white); border-radius:16px; border:1px solid var(--platinum); overflow:hidden; margin-bottom:22px; }
+.tp-header { padding:16px 22px; border-bottom:1px solid var(--platinum); background:var(--ivory); display:flex; align-items:center; justify-content:space-between; }
+.tp-header h3 { font-family:'Playfair Display',serif; font-size:16px; font-weight:600; color:var(--royal); }
+
+.loading-overlay {
+  position:fixed; inset:0; background:rgba(13,27,42,0.6); backdrop-filter:blur(4px);
+  display:flex; align-items:center; justify-content:center; z-index:999;
+  flex-direction:column; gap:16px; color:var(--white);
+}
+.spinner { width:48px; height:48px; border:4px solid rgba(255,255,255,0.2); border-top-color:var(--gold-light); border-radius:50%; animation:spin 1s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div id="loading-overlay" class="loading-overlay">
+  <div class="spinner"></div>
+  <div style="font-family:'Playfair Display',serif;font-size:18px">Computing encryption metrics…</div>
+  <div style="font-size:13px;color:rgba(255,255,255,0.6)">Running chaotic key + quality analysis</div>
+</div>
+
+<!-- Header stat cards (filled by JS) -->
+<div class="metrics-header-cards">
+  <div class="mhc">
+    <div class="mhc-icon" style="color:#7C3AED">🔐</div>
+    <div class="mhc-val" id="hc-enc-psnr">—</div>
+    <div class="mhc-label">Avg Encrypted PSNR</div>
+    <div class="mhc-badge"><span class="status-badge status-active">Lower = Better</span></div>
+  </div>
+  <div class="mhc">
+    <div class="mhc-icon" style="color:var(--emerald)">📈</div>
+    <div class="mhc-val" id="hc-dec-psnr">—</div>
+    <div class="mhc-label">Avg Decrypted PSNR</div>
+    <div class="mhc-badge"><span class="status-badge status-active">Higher = Better</span></div>
+  </div>
+  <div class="mhc">
+    <div class="mhc-icon" style="color:var(--royal)">🌀</div>
+    <div class="mhc-val" id="hc-enc-ssim">—</div>
+    <div class="mhc-label">Encrypted SSIM</div>
+    <div class="mhc-badge"><span class="status-badge status-encrypted">Near 0 = Good</span></div>
+  </div>
+  <div class="mhc">
+    <div class="mhc-icon" style="color:var(--gold)">📊</div>
+    <div class="mhc-val" id="hc-entropy">—</div>
+    <div class="mhc-label">Avg Entropy</div>
+    <div class="mhc-badge"><span class="status-badge {% if not model_trained %}status-pending{% else %}status-active{% endif %}">
+      {{ 'Demo Mode' if not model_trained else 'Live' }}</span></div>
+  </div>
+  <div class="mhc">
+    <div class="mhc-icon" style="color:var(--teal)">🖼️</div>
+    <div class="mhc-val">{{ total_scans }}</div>
+    <div class="mhc-label">Total Scans</div>
+    <div class="mhc-badge"><span class="status-badge status-discharged">{{ total_patients }} Patients</span></div>
+  </div>
+</div>
+
+<!-- Charts row 1 -->
+<div class="chart-grid">
+
+  <div class="chart-panel">
+    <div class="cp-header">
+      <div>
+        <h3>PSNR Comparison</h3>
+        <p>Encrypted vs Decrypted — per scan</p>
+      </div>
+      <span class="status-badge status-active">dB</span>
+    </div>
+    <div class="cp-body"><canvas id="psnrChart"></canvas></div>
+  </div>
+
+  <div class="chart-panel">
+    <div class="cp-header">
+      <div>
+        <h3>SSIM Index</h3>
+        <p>Structural similarity — encrypted vs decrypted</p>
+      </div>
+      <span class="status-badge status-encrypted">0–1 scale</span>
+    </div>
+    <div class="cp-body"><canvas id="ssimChart"></canvas></div>
+  </div>
+
+</div>
+
+<!-- Charts row 2 -->
+<div class="chart-grid">
+
+  <div class="chart-panel">
+    <div class="cp-header">
+      <div>
+        <h3>Shannon Entropy</h3>
+        <p>Pixel distribution randomness of encrypted images</p>
+      </div>
+      <span class="status-badge status-pending">0–8 bits</span>
+    </div>
+    <div class="cp-body"><canvas id="entropyChart"></canvas></div>
+  </div>
+
+  <div class="chart-panel">
+    <div class="cp-header">
+      <div>
+        <h3>MSE — Mean Squared Error</h3>
+        <p>Pixel difference: original vs encrypted/decrypted</p>
+      </div>
+      <span class="status-badge status-active">Lower decrypted = better</span>
+    </div>
+    <div class="cp-body"><canvas id="mseChart"></canvas></div>
+  </div>
+
+</div>
+
+<!-- Metric explanations -->
+<div class="explain-grid">
+  <div class="explain-card" style="border-top-color:var(--royal)">
+    <h4 style="color:var(--royal)">📡 PSNR</h4>
+    <p>Peak Signal-to-Noise Ratio measures how much distortion the encryption introduced. <strong>Encrypted PSNR should be low</strong> (image destroyed). <strong>Decrypted PSNR should be high ≥35 dB</strong> (image restored).</p>
+    <div class="metric-range" style="color:var(--royal)">Encrypted: &lt;15 dB ✓ &nbsp; Decrypted: &gt;35 dB ✓</div>
+  </div>
+  <div class="explain-card" style="border-top-color:#7C3AED">
+    <h4 style="color:#7C3AED">🌀 SSIM</h4>
+    <p>Structural Similarity Index measures how structurally similar two images are. <strong>Encrypted SSIM near 0</strong> means the image structure is completely destroyed. <strong>Decrypted SSIM near 1</strong> means the image is fully recovered.</p>
+    <div class="metric-range" style="color:#7C3AED">Encrypted: &lt;0.1 ✓ &nbsp; Decrypted: &gt;0.95 ✓</div>
+  </div>
+  <div class="explain-card" style="border-top-color:var(--gold)">
+    <h4 style="color:#92400E">📊 Entropy</h4>
+    <p>Shannon entropy measures randomness of pixel values. A natural image has entropy 6–7 bits. <strong>A strongly encrypted image should have entropy close to 8.0</strong>, meaning pixel values are uniformly distributed — indistinguishable from random noise.</p>
+    <div class="metric-range" style="color:#92400E">Encrypted: &gt;7.5 bits ✓</div>
+  </div>
+</div>
+
+<!-- Data Table -->
+<div class="table-panel">
+  <div class="tp-header">
+    <h3>Per-Scan Metrics Table</h3>
+    <span style="font-size:12px;color:var(--slate)">Demo data — replace with real scan metrics</span>
+  </div>
+  <table class="data-table" id="metrics-table">
+    <thead>
+      <tr>
+        <th>Scan</th>
+        <th>Enc PSNR (dB)</th>
+        <th>Dec PSNR (dB)</th>
+        <th>Enc SSIM</th>
+        <th>Dec SSIM</th>
+        <th>Entropy (bits)</th>
+        <th>Enc MSE</th>
+        <th>Dec MSE</th>
+        <th>Quality</th>
+      </tr>
+    </thead>
+    <tbody id="metrics-tbody">
+      <tr><td colspan="9" style="text-align:center;padding:32px;color:var(--slate)">Loading metrics…</td></tr>
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+// Premium color palette for charts
+const ROYAL   = '#1B3A6B';
+const TEAL    = '#0E6B8C';
+const GOLD    = '#C9A84C';
+const EMERALD = '#2E7D52';
+const PURPLE  = '#7C3AED';
+const ROSE    = '#C0392B';
+
+Chart.defaults.font.family = "'DM Sans', sans-serif";
+Chart.defaults.color       = '#6B7280';
+
+let psnrChart, ssimChart, entropyChart, mseChart;
+
+async function loadMetrics() {
+  try {
+    const res  = await fetch('/metrics/compute-demo');
+    const data = await res.json();
+
+    document.getElementById('loading-overlay').style.display = 'none';
+
+    // Fill header cards
+    document.getElementById('hc-enc-psnr').textContent = data.avg_enc_psnr + ' dB';
+    document.getElementById('hc-dec-psnr').textContent = data.avg_dec_psnr + ' dB';
+    document.getElementById('hc-enc-ssim').textContent = data.avg_enc_ssim;
+    document.getElementById('hc-entropy').textContent  = data.avg_entropy;
+
+    const labels    = data.results.map(r => r.label);
+    const enc_psnr  = data.results.map(r => r.enc_psnr);
+    const dec_psnr  = data.results.map(r => r.dec_psnr);
+    const enc_ssim  = data.results.map(r => r.enc_ssim);
+    const dec_ssim  = data.results.map(r => r.dec_ssim);
+    const entropy   = data.results.map(r => r.enc_entropy);
+    const ori_ent   = data.results.map(r => r.ori_entropy);
+    const enc_mse   = data.results.map(r => r.enc_mse);
+    const dec_mse   = data.results.map(r => r.dec_mse);
+
+    // ── PSNR Chart ──────────────────────────────────────────────
+    psnrChart = new Chart(document.getElementById('psnrChart'), {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          { label: 'Encrypted PSNR (dB)', data: enc_psnr, backgroundColor: 'rgba(192,57,43,0.7)',   borderColor: ROSE,    borderWidth:1.5, borderRadius:4 },
+          { label: 'Decrypted PSNR (dB)', data: dec_psnr, backgroundColor: 'rgba(46,125,82,0.7)',   borderColor: EMERALD, borderWidth:1.5, borderRadius:4 },
+        ]
+      },
+      options: {
+        responsive:true,
+        plugins: { legend:{ position:'top' } },
+        scales: {
+          y: { beginAtZero:true, grid:{ color:'rgba(0,0,0,0.04)' }, title:{ display:true, text:'PSNR (dB)' } }
+        }
+      }
+    });
+
+    // ── SSIM Chart ──────────────────────────────────────────────
+    ssimChart = new Chart(document.getElementById('ssimChart'), {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          { label: 'Encrypted SSIM', data: enc_ssim, borderColor: PURPLE, backgroundColor:'rgba(124,58,237,0.1)', tension:0.4, fill:true, pointRadius:4 },
+          { label: 'Decrypted SSIM', data: dec_ssim, borderColor: EMERALD, backgroundColor:'rgba(46,125,82,0.1)', tension:0.4, fill:true, pointRadius:4 },
+        ]
+      },
+      options: {
+        responsive:true,
+        plugins: { legend:{ position:'top' } },
+        scales: {
+          y: { min:0, max:1, grid:{ color:'rgba(0,0,0,0.04)' }, title:{ display:true, text:'SSIM (0–1)' } }
+        }
+      }
+    });
+
+    // ── Entropy Chart ────────────────────────────────────────────
+    entropyChart = new Chart(document.getElementById('entropyChart'), {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          { label: 'Original Entropy',  data: ori_ent, backgroundColor:'rgba(201,168,76,0.5)', borderColor:GOLD,  borderWidth:1.5, borderRadius:4 },
+          { label: 'Encrypted Entropy', data: entropy,  backgroundColor:'rgba(27,58,107,0.7)',  borderColor:ROYAL, borderWidth:1.5, borderRadius:4 },
+        ]
+      },
+      options: {
+        responsive:true,
+        plugins: { legend:{ position:'top' } },
+        scales: {
+          y: { min:0, max:8, grid:{ color:'rgba(0,0,0,0.04)' }, title:{ display:true, text:'Entropy (bits)' } }
+        }
+      }
+    });
+
+    // ── MSE Chart ────────────────────────────────────────────────
+    mseChart = new Chart(document.getElementById('mseChart'), {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          { label: 'Encrypted MSE', data: enc_mse, borderColor:ROSE,    backgroundColor:'rgba(192,57,43,0.1)', tension:0.4, fill:true },
+          { label: 'Decrypted MSE', data: dec_mse, borderColor:TEAL,    backgroundColor:'rgba(14,107,140,0.1)', tension:0.4, fill:true },
+        ]
+      },
+      options: {
+        responsive:true,
+        plugins: { legend:{ position:'top' } },
+        scales: {
+          y: { beginAtZero:true, grid:{ color:'rgba(0,0,0,0.04)' }, title:{ display:true, text:'MSE' } }
+        }
+      }
+    });
+
+    // ── Fill data table ──────────────────────────────────────────
+    const tbody = document.getElementById('metrics-tbody');
+    tbody.innerHTML = data.results.map(r => {
+      const q = r.dec_psnr > 35 ? 'Excellent' : r.dec_psnr > 28 ? 'Good' : 'Moderate';
+      const qcls = q === 'Excellent' ? 'status-active' : q === 'Good' ? 'status-discharged' : 'status-pending';
+      return `<tr>
+        <td><strong>${r.label}</strong></td>
+        <td style="color:var(--rose)">${r.enc_psnr}</td>
+        <td style="color:var(--emerald)">${r.dec_psnr}</td>
+        <td>${r.enc_ssim}</td>
+        <td>${r.dec_ssim}</td>
+        <td><strong>${r.enc_entropy}</strong></td>
+        <td style="font-size:12px">${r.enc_mse}</td>
+        <td style="font-size:12px">${r.dec_mse}</td>
+        <td><span class="status-badge ${qcls}">${q}</span></td>
+      </tr>`;
+    }).join('');
+
+  } catch(e) {
+    document.getElementById('loading-overlay').style.display = 'none';
+    console.error('Metrics error:', e);
+  }
+}
+
+loadMetrics();
+</script>
+{% endblock %}

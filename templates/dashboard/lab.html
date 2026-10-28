@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Lab Dashboard — MediVault{% endblock %}
+{% block page_title %}Laboratory Centre{% endblock %}
+{% block page_subtitle %}Manage and upload patient lab reports{% endblock %}
+
+{% block sidebar_nav %}
+<div class="nav-section-label">Lab</div>
+<a href="/dashboard" class="nav-item active"><i class="fas fa-flask"></i> Dashboard</a>
+<a href="/reports/upload" class="nav-item"><i class="fas fa-upload"></i> Upload Report</a>
+<a href="/reports" class="nav-item"><i class="fas fa-file-medical"></i> All Reports</a>
+<div class="nav-section-label">Patients</div>
+<a href="/patients" class="nav-item"><i class="fas fa-hospital-user"></i> Patient List</a>
+{% endblock %}
+
+{% block content %}
+<div class="stat-cards">
+  <a href="/reports" class="stat-card" style="text-decoration:none;color:inherit">
+    <div class="sc-icon" style="background:#ECFDF5;color:var(--emerald)"><i class="fas fa-file-medical"></i></div>
+    <div><div class="sc-val">{{ stats.total_reports }}</div><div class="sc-label">Total Reports</div></div>
+  </a>
+  <a href="/reports" class="stat-card" style="text-decoration:none;color:inherit">
+    <div class="sc-icon" style="background:#EEF2FF;color:var(--royal)"><i class="fas fa-upload"></i></div>
+    <div><div class="sc-val">{{ stats.uploaded_today }}</div><div class="sc-label">Uploaded Today</div></div>
+  </a>
+  <a href="/patients" class="stat-card" style="text-decoration:none;color:inherit">
+    <div class="sc-icon" style="background:#FFF8E6;color:var(--gold)"><i class="fas fa-hospital-user"></i></div>
+    <div><div class="sc-val">{{ stats.total_patients }}</div><div class="sc-label">Total Patients</div></div>
+  </a>
+  <a href="/reports/upload" class="stat-card" style="text-decoration:none;color:inherit">
+    <div class="sc-icon" style="background:#EDE9FE;color:#7C3AED"><i class="fas fa-flask"></i></div>
+    <div><div class="sc-val">Lab</div><div class="sc-label">Upload Report</div></div>
+  </a>
+</div>
+
+<div class="content-grid">
+  <!-- Recent Reports -->
+  <div class="panel">
+    <div class="panel-header">
+      <div><h3>Recent Lab Reports</h3><p>Click to view or download</p></div>
+      <a href="/reports/upload" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Upload Report</a>
+    </div>
+    <div class="panel-body" style="padding:0">
+      <table class="data-table">
+        <thead><tr><th>Report Name</th><th>Type</th><th>Patient</th><th>Uploaded</th><th>Action</th></tr></thead>
+        <tbody>
+          {% for r in recent_reports %}
+          <tr>
+            <td>
+              <strong>{{ r.report_name }}</strong>
+              {% set ext = r.file_path.rsplit('.',1)[-1].upper() %}
+              <span style="background:{% if ext=='PDF' %}#FFEAA7{% else %}#DFF9FB{% endif %};color:#2d3436;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:700;margin-left:6px">{{ ext }}</span>
+            </td>
+            <td style="font-size:12px">{{ r.report_type or 'General' }}</td>
+            <td style="font-size:13px">
+              {% if r.patient_id %}
+                {% set p = r.patient_id %}
+                <a href="/patients/{{ r.patient_id }}" style="color:var(--royal)">View Patient</a>
+              {% else %}—{% endif %}
+            </td>
+            <td style="font-size:12px;color:var(--slate)">{{ r.uploaded_at.strftime('%d %b %Y, %I:%M %p') }}</td>
+            <td style="display:flex;gap:6px">
+              <a href="/reports/{{ r.id }}/view" class="btn btn-outline btn-sm" target="_blank"><i class="fas fa-eye"></i></a>
+              <a href="/reports/{{ r.id }}/download" class="btn btn-gold btn-sm"><i class="fas fa-download"></i></a>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="5" style="text-align:center;color:var(--slate);padding:40px">No reports uploaded yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Quick Upload -->
+  <div class="panel">
+    <div class="panel-header"><div><h3>Quick Upload</h3><p>Upload a report now</p></div></div>
+    <div class="panel-body">
+      <div class="quick-actions">
+        <a href="/reports/upload?type=Blood" class="qa-card">
+          <div class="qa-icon" style="background:#FEE2E2;color:var(--rose)"><i class="fas fa-droplet"></i></div>
+          <div><div class="qa-label">Blood Report</div><div class="qa-sub">CBC, Lipid, etc.</div></div>
+        </a>
+        <a href="/reports/upload?type=Urine" class="qa-card">
+          <div class="qa-icon" style="background:#FFF8E6;color:var(--gold)"><i class="fas fa-flask"></i></div>
+          <div><div class="qa-label">Urine Report</div><div class="qa-sub">Urinalysis</div></div>
+        </a>
+        <a href="/reports/upload?type=Imaging" class="qa-card">
+          <div class="qa-icon" style="background:#EDE9FE;color:#7C3AED"><i class="fas fa-x-ray"></i></div>
+          <div><div class="qa-label">Imaging</div><div class="qa-sub">X-Ray / MRI</div></div>
+        </a>
+        <a href="/reports/upload?type=Other" class="qa-card">
+          <div class="qa-icon" style="background:#ECFDF5;color:var(--emerald)"><i class="fas fa-file-medical"></i></div>
+          <div><div class="qa-label">Other</div><div class="qa-sub">General report</div></div>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

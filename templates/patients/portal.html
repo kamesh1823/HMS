@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Health Records — MediVault</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <style>
+    :root{--royal:#1B3A6B;--royal-deep:#0D2347;--gold:#C9A84C;--gold-light:#E4C97E;--teal:#0E6B8C;--emerald:#2E7D52;--ivory:#FAF8F5;--white:#FFFFFF;--slate:#6B7280;--navy:#0D1B2A;--platinum:#E8E4DC;}
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'Inter',sans-serif;background:var(--ivory);color:var(--navy);}
+
+    /* TOP BAR */
+    .topbar{background:linear-gradient(135deg,var(--royal-deep),var(--royal));padding:0 32px;height:64px;display:flex;align-items:center;justify-content:space-between;}
+    .topbar-logo{display:flex;align-items:center;gap:10px;text-decoration:none;}
+    .topbar-logo-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--gold),var(--gold-light));border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--royal-deep);font-size:15px;}
+    .topbar-logo span{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:white;}
+    .topbar-right{display:flex;align-items:center;gap:16px;}
+    .topbar-user{font-size:13px;color:rgba(255,255,255,0.8);}
+    .topbar-logout{color:rgba(255,255,255,0.7);text-decoration:none;font-size:13px;display:flex;align-items:center;gap:6px;padding:7px 14px;border:1px solid rgba(255,255,255,0.2);border-radius:8px;transition:all .2s;}
+    .topbar-logout:hover{background:rgba(255,255,255,0.1);color:white;}
+
+    /* HERO */
+    .hero{background:linear-gradient(135deg,var(--royal-deep),var(--royal),var(--teal));padding:40px 32px;position:relative;overflow:hidden;}
+    .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 70% 50%,rgba(201,168,76,0.08),transparent 60%);}
+    .hero-inner{max-width:1100px;margin:0 auto;display:flex;align-items:center;gap:28px;position:relative;z-index:1;}
+    .hero-avatar{width:72px;height:72px;border-radius:18px;background:rgba(255,255,255,0.12);border:2px solid rgba(201,168,76,0.4);display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:28px;font-weight:700;color:white;flex-shrink:0;}
+    .hero-name{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:white;line-height:1.1;}
+    .hero-sub{font-size:13px;color:rgba(255,255,255,0.7);margin-top:5px;display:flex;gap:18px;flex-wrap:wrap;}
+    .hero-sub span{display:flex;align-items:center;gap:5px;}
+    .read-only-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(46,125,82,0.25);border:1px solid rgba(46,125,82,0.5);color:#6EE7B7;padding:4px 12px;border-radius:100px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-top:8px;}
+
+    /* CONTENT */
+    .content{max-width:1100px;margin:0 auto;padding:32px;}
+    .tab-bar{display:flex;gap:4px;background:var(--white);border-radius:14px;padding:6px;border:1px solid var(--platinum);margin-bottom:28px;}
+    .tab{flex:1;padding:10px;text-align:center;border-radius:10px;cursor:pointer;font-size:14px;font-weight:600;color:var(--slate);transition:all .2s;border:none;background:transparent;}
+    .tab.active{background:var(--royal);color:white;box-shadow:0 4px 12px rgba(27,58,107,0.25);}
+    .tab-content{display:none;}
+    .tab-content.active{display:block;}
+
+    /* CARDS */
+    .info-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;margin-bottom:24px;}
+    .info-box{background:var(--white);border-radius:14px;padding:18px;border:1px solid var(--platinum);}
+    .ib-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--slate);margin-bottom:5px;}
+    .ib-val{font-size:15px;font-weight:600;color:var(--navy);}
+
+    /* VISIT CARD */
+    .visit-card{background:var(--white);border-radius:16px;border:1px solid var(--platinum);overflow:hidden;margin-bottom:16px;}
+    .vc-header{padding:16px 20px;background:var(--ivory);border-bottom:1px solid var(--platinum);display:flex;align-items:center;justify-content:space-between;}
+    .vc-reason{font-family:'Playfair Display',serif;font-size:17px;font-weight:700;color:var(--royal);}
+    .vc-date{font-size:12px;color:var(--slate);}
+    .vc-body{padding:16px 20px;}
+    .vc-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:12px;}
+    .vc-field .label{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--slate);font-weight:600;}
+    .vc-field .val{font-size:14px;color:var(--navy);margin-top:4px;line-height:1.6;}
+    .rx-item{display:flex;align-items:center;gap:10px;background:var(--ivory);border-radius:10px;padding:10px 14px;margin-top:8px;font-size:13px;}
+    .status-badge{display:inline-block;padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;}
+    .status-active{background:#DCFCE7;color:#166534;}
+    .status-discharged{background:#E0F2FE;color:#0C4A6E;}
+
+    /* REPORT ITEM */
+    .report-item{background:var(--white);border:1px solid var(--platinum);border-radius:14px;padding:16px 20px;display:flex;align-items:center;gap:16px;margin-bottom:12px;transition:all .2s;}
+    .report-item:hover{border-color:var(--emerald);box-shadow:0 4px 16px rgba(46,125,82,0.1);}
+    .ri-icon{width:44px;height:44px;border-radius:11px;background:#ECFDF5;display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--emerald);flex-shrink:0;}
+    .ri-name{font-weight:700;font-size:14px;color:var(--navy);}
+    .ri-meta{font-size:12px;color:var(--slate);margin-top:3px;}
+
+    /* EMPTY */
+    .empty{text-align:center;padding:48px;color:var(--slate);background:var(--white);border-radius:16px;border:1px solid var(--platinum);}
+    .empty i{font-size:36px;color:var(--platinum);display:block;margin-bottom:12px;}
+
+    .tag{display:inline-block;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:700;}
+    .tag-allergy{background:#FEE2E2;color:#991B1B;}
+    .tag-condition{background:#FEF3C7;color:#92400E;}
+
+    @media(max-width:640px){.vc-row{grid-template-columns:1fr;}.hero-inner{flex-direction:column;align-items:flex-start;}.tab-bar{flex-wrap:wrap;}}
+  </style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <a href="/" class="topbar-logo">
+    <div class="topbar-logo-icon"><i class="fas fa-shield-heart"></i></div>
+    <span>MediVault</span>
+  </a>
+  <div class="topbar-right">
+    <div class="topbar-user"><i class="fas fa-user-circle" style="margin-right:6px"></i>{{ current_user.full_name }}</div>
+    <a href="/auth/logout" class="topbar-logout"><i class="fas fa-right-from-bracket"></i> Sign Out</a>
+  </div>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-avatar">{{ patient.full_name[0].upper() }}</div>
+    <div>
+      <div class="hero-name">{{ patient.full_name }}</div>
+      <div class="hero-sub">
+        <span><i class="fas fa-id-card"></i> {{ patient.patient_id }}</span>
+        <span><i class="fas fa-calendar"></i> {{ patient.date_of_birth.strftime('%d %b %Y') }}</span>
+        <span><i class="fas fa-tint"></i> {{ patient.blood_group or '—' }}</span>
+        <span><i class="fas fa-venus-mars"></i> {{ patient.gender or '—' }}</span>
+        <span><i class="fas fa-phone"></i> {{ patient.phone }}</span>
+      </div>
+      <div class="read-only-badge"><i class="fas fa-eye"></i> Read-Only Patient Portal</div>
+    </div>
+  </div>
+</div>
+
+<!-- CONTENT -->
+<div class="content">
+
+  <!-- TAB BAR -->
+  <div class="tab-bar">
+    <button class="tab active" onclick="showTab('profile')"><i class="fas fa-id-card"></i> My Profile</button>
+    <button class="tab" onclick="showTab('visits')"><i class="fas fa-stethoscope"></i> Visit History <span style="background:rgba(27,58,107,0.1);padding:1px 7px;border-radius:100px;font-size:11px">{{ visits|length }}</span></button>
+    <button class="tab" onclick="showTab('reports')"><i class="fas fa-flask"></i> Lab Reports <span style="background:rgba(27,58,107,0.1);padding:1px 7px;border-radius:100px;font-size:11px">{{ lab_reports|length }}</span></button>
+    <button class="tab" onclick="showTab('appointments')"><i class="fas fa-calendar-check"></i> Appointments <span style="background:rgba(27,58,107,0.1);padding:1px 7px;border-radius:100px;font-size:11px">{{ appointments|length }}</span></button>
+  </div>
+
+  <!-- PROFILE TAB -->
+  <div class="tab-content active" id="tab-profile">
+    <div style="background:#ECFDF5;border:1.5px solid var(--emerald);border-radius:14px;padding:14px 18px;font-size:13px;color:var(--emerald);margin-bottom:20px;display:flex;gap:10px">
+      <i class="fas fa-lock" style="margin-top:1px"></i>
+      <div><strong>Read-Only Access</strong> — You can view your health records but cannot modify them. To update any information, please contact the reception desk.</div>
+    </div>
+
+    <div class="info-grid">
+      <div class="info-box"><div class="ib-label">Full Name</div><div class="ib-val">{{ patient.full_name }}</div></div>
+      <div class="info-box"><div class="ib-label">Patient ID</div><div class="ib-val" style="font-family:monospace;color:var(--royal)">{{ patient.patient_id }}</div></div>
+      <div class="info-box"><div class="ib-label">Date of Birth</div><div class="ib-val">{{ patient.date_of_birth.strftime('%d %B %Y') }}</div></div>
+      <div class="info-box"><div class="ib-label">Gender</div><div class="ib-val">{{ patient.gender or '—' }}</div></div>
+      <div class="info-box"><div class="ib-label">Blood Group</div><div class="ib-val" style="color:var(--rose,#C0392B);font-weight:700">{{ patient.blood_group or '—' }}</div></div>
+      <div class="info-box"><div class="ib-label">Phone</div><div class="ib-val">{{ patient.phone or '—' }}</div></div>
+      <div class="info-box"><div class="ib-label">Email</div><div class="ib-val">{{ patient.email or '—' }}</div></div>
+      <div class="info-box" style="grid-column:1/-1"><div class="ib-label">Address</div><div class="ib-val">{{ patient.address or '—' }}</div></div>
+    </div>
+
+    <!-- Emergency Contact -->
+    <div style="background:var(--white);border-radius:14px;padding:20px;border:1px solid var(--platinum);margin-bottom:16px">
+      <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--slate);margin-bottom:14px"><i class="fas fa-phone-alt" style="color:var(--royal)"></i> Emergency Contact</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div><div class="ib-label">Name</div><div class="ib-val">{{ patient.emergency_contact_name or '—' }}</div></div>
+        <div><div class="ib-label">Phone</div><div class="ib-val">{{ patient.emergency_contact_phone or '—' }}</div></div>
+      </div>
+    </div>
+
+    <!-- Medical Background -->
+    <div style="background:var(--white);border-radius:14px;padding:20px;border:1px solid var(--platinum)">
+      <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--slate);margin-bottom:14px"><i class="fas fa-notes-medical" style="color:var(--royal)"></i> Medical Background</div>
+      <div style="margin-bottom:12px">
+        <div class="ib-label" style="margin-bottom:6px">Allergies</div>
+        {% if patient.allergies %}
+          {% for a in patient.allergies.split(',') %}<span class="tag tag-allergy">{{ a.strip() }}</span> {% endfor %}
+        {% else %}<span style="font-size:13px;color:var(--slate)">None recorded</span>{% endif %}
+      </div>
+      <div>
+        <div class="ib-label" style="margin-bottom:6px">Chronic Conditions</div>
+        {% if patient.chronic_conditions %}
+          {% for c in patient.chronic_conditions.split(',') %}<span class="tag tag-condition">{{ c.strip() }}</span> {% endfor %}
+        {% else %}<span style="font-size:13px;color:var(--slate)">None recorded</span>{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- VISITS TAB -->
+  <div class="tab-content" id="tab-visits">
+    {% if visits %}
+      {% for v in visits %}
+      <div class="visit-card">
+        <div class="vc-header">
+          <div>
+            <div class="vc-reason">{{ v.reason or 'General Visit' }}</div>
+            <div class="vc-date"><i class="fas fa-calendar"></i> {{ v.visit_date.strftime('%d %B %Y, %I:%M %p') }}</div>
+          </div>
+          <span class="status-badge status-{{ v.status }}">{{ v.status.title() }}</span>
+        </div>
+        <div class="vc-body">
+          <div class="vc-row">
+            <div class="vc-field">
+              <div class="label">Diagnosis</div>
+              <div class="val">{{ v.diagnosis or '—' }}</div>
+            </div>
+            <div class="vc-field">
+              <div class="label">Clinical Notes</div>
+              <div class="val">{{ v.notes or '—' }}</div>
+            </div>
+          </div>
+
+          {% if v.prescriptions %}
+          <div style="border-top:1px dashed var(--platinum);padding-top:12px;margin-top:4px">
+            <div style="font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--slate);font-weight:700;margin-bottom:8px"><i class="fas fa-pills" style="color:var(--emerald)"></i> Prescriptions</div>
+            {% for rx in v.prescriptions %}
+            <div class="rx-item">
+              <i class="fas fa-capsules" style="color:var(--emerald)"></i>
+              <div>
+                <span style="font-weight:700;color:var(--royal)">{{ rx.medicine }}</span>
+                <span style="color:var(--slate)"> — {{ rx.dosage or '' }}{% if rx.frequency %} · {{ rx.frequency }}{% endif %}{% if rx.duration %} · {{ rx.duration }}{% endif %}</span>
+                {% if rx.notes %}<div style="font-size:12px;color:var(--slate);margin-top:2px">{{ rx.notes }}</div>{% endif %}
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+    <div class="empty">
+      <i class="fas fa-stethoscope"></i>
+      <div style="font-weight:600;margin-bottom:6px">No visit records yet</div>
+      <div style="font-size:13px">Your visit history will appear here after your first consultation.</div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- LAB REPORTS TAB -->
+  <div class="tab-content" id="tab-reports">
+    {% if lab_reports %}
+      {% for r in lab_reports %}
+      <div class="report-item">
+        <div class="ri-icon">
+          {% if r.file_path.rsplit('.',1)[-1].lower() == 'pdf' %}<i class="fas fa-file-pdf"></i>
+          {% else %}<i class="fas fa-file-image"></i>{% endif %}
+        </div>
+        <div style="flex:1;min-width:0">
+          <div class="ri-name">{{ r.report_name }}</div>
+          <div class="ri-meta">
+            <span style="background:#ECFDF5;color:var(--emerald);padding:2px 8px;border-radius:5px;font-weight:600;font-size:11px">{{ r.report_type or 'General' }}</span>
+            &nbsp;·&nbsp; <i class="fas fa-calendar"></i> {{ r.uploaded_at.strftime('%d %b %Y') }}
+            {% if r.notes %}&nbsp;·&nbsp; {{ r.notes }}{% endif %}
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-shrink:0">
+          <a href="/reports/{{ r.id }}/view" target="_blank"
+            style="padding:7px 14px;background:var(--royal);color:white;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600">
+            <i class="fas fa-eye"></i> View
+          </a>
+          <a href="/reports/{{ r.id }}/download"
+            style="padding:7px 14px;background:var(--gold);color:var(--royal-deep);border-radius:8px;text-decoration:none;font-size:13px;font-weight:600">
+            <i class="fas fa-download"></i>
+          </a>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+    <div class="empty">
+      <i class="fas fa-flask"></i>
+      <div style="font-weight:600;margin-bottom:6px">No lab reports yet</div>
+      <div style="font-size:13px">Lab results uploaded by your doctor or lab technician will appear here.</div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- APPOINTMENTS TAB -->
+  <div class="tab-content" id="tab-appointments">
+    {% if appointments %}
+      {% for a in appointments %}
+      <div style="background:var(--white);border-radius:16px;border:1px solid var(--platinum);padding:20px;margin-bottom:14px;display:flex;align-items:flex-start;gap:16px">
+        <div style="width:44px;height:44px;border-radius:12px;background:#EEF2FF;color:var(--royal);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">
+          <i class="fas fa-calendar-check"></i>
+        </div>
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px">
+            <span style="font-family:'Playfair Display',serif;font-size:16px;font-weight:700;color:var(--royal)">
+              {{ a.appointment_date }}
+            </span>
+            <span class="status-badge status-{% if a.status == 'confirmed' %}active{% elif a.status == 'completed' %}discharged{% elif a.status == 'cancelled' %}cancelled{% else %}pending{% endif %}"
+              style="{% if a.status=='pending' %}background:#FEF3C7;color:#92400E{% elif a.status=='cancelled' %}background:#FEE2E2;color:#991B1B{% endif %}">
+              {{ a.status.title() }}
+            </span>
+          </div>
+          <div style="font-size:13px;color:var(--slate);display:flex;gap:16px;flex-wrap:wrap">
+            {% if a.preferred_doctor %}<span><i class="fas fa-user-doctor"></i> {{ a.preferred_doctor }}</span>{% endif %}
+            {% if a.reason %}<span><i class="fas fa-comment-medical"></i> {{ a.reason }}</span>{% endif %}
+          </div>
+          <div style="font-size:11px;color:var(--slate);margin-top:5px">
+            Booked on {{ a.created_at.strftime('%d %b %Y') }}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+    <div class="empty">
+      <i class="fas fa-calendar-xmark"></i>
+      <div style="font-weight:600;margin-bottom:6px">No appointments found</div>
+      <div style="font-size:13px">Your appointment history will appear here.</div>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<script>
+function showTab(name) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block title %}Billing — MediVault{% endblock %}
+{% block page_title %}Billing & Payments{% endblock %}
+{% block page_subtitle %}Record patient payments and generate receipts{% endblock %}
+
+{% block sidebar_nav %}
+<div class="nav-section-label">Front Desk</div>
+<a href="/dashboard"        class="nav-item"><i class="fas fa-gauge-high"></i> Dashboard</a>
+<a href="/patients/new"     class="nav-item"><i class="fas fa-user-plus"></i> Register Patient</a>
+<a href="/patients"         class="nav-item"><i class="fas fa-hospital-user"></i> Patient List</a>
+<div class="nav-section-label">Appointments</div>
+<a href="/appointments"     class="nav-item"><i class="fas fa-calendar-check"></i> All Appointments</a>
+<a href="/staff/book-appointment" class="nav-item"><i class="fas fa-calendar-plus"></i> Book Appointment</a>
+<a href="/checkin"          class="nav-item"><i class="fas fa-door-open"></i> Patient Check-in</a>
+<div class="nav-section-label">Admin</div>
+<a href="/billing"          class="nav-item active"><i class="fas fa-receipt"></i> Billing</a>
+<a href="/reports/upload"   class="nav-item"><i class="fas fa-file-arrow-up"></i> Upload Report</a>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.billing-grid { display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+@media(max-width:768px){ .billing-grid{ grid-template-columns:1fr; } }
+.form-panel { background:var(--white); border-radius:20px; padding:28px; border:1px solid var(--platinum); }
+.form-group { margin-bottom:18px; }
+.form-label { display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--royal); margin-bottom:8px; }
+.form-control {
+  width:100%; padding:11px 16px; border:1.5px solid var(--platinum); border-radius:10px;
+  font-family:'DM Sans',sans-serif; font-size:14px; color:var(--navy-text);
+  background:var(--ivory); outline:none; box-sizing:border-box;
+}
+.form-control:focus { border-color:var(--royal); background:white; }
+.amount-input { position:relative; }
+.amount-symbol { position:absolute; left:14px; top:50%; transform:translateY(-50%); font-weight:700; color:var(--royal); font-size:15px; }
+.amount-input .form-control { padding-left:30px; }
+.pay-mode-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.pay-mode-btn { padding:10px; border:1.5px solid var(--platinum); border-radius:10px; text-align:center; cursor:pointer; transition:all .2s; font-size:12px; font-weight:600; }
+.pay-mode-btn:hover, .pay-mode-btn.active { border-color:var(--royal); background:#EEF2FF; color:var(--royal); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="billing-grid">
+
+  <!-- Payment Form -->
+  <div class="form-panel">
+    <h3 style="font-family:'Playfair Display',serif;font-size:18px;color:var(--royal);margin-bottom:22px">
+      <i class="fas fa-receipt" style="margin-right:8px"></i>Record Payment
+    </h3>
+    <form method="POST" id="billing-form">
+      <div class="form-group">
+        <label class="form-label"><i class="fas fa-user"></i> Patient *</label>
+        <select name="patient_id" class="form-control" required>
+          <option value="">— Select patient —</option>
+          {% for p in patients %}
+          <option value="{{ p.id }}">{{ p.patient_id }} — {{ p.full_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label"><i class="fas fa-indian-rupee-sign"></i> Amount (₹) *</label>
+        <div class="amount-input">
+          <span class="amount-symbol">₹</span>
+          <input type="number" name="amount" class="form-control" min="0" step="0.01" placeholder="0.00" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label"><i class="fas fa-file-invoice"></i> Description</label>
+        <input type="text" name="description" class="form-control" placeholder="e.g. Consultation fee, Lab test, X-Ray…">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label"><i class="fas fa-credit-card"></i> Payment Mode *</label>
+        <div class="pay-mode-grid">
+          <label class="pay-mode-btn">
+            <input type="radio" name="payment_mode" value="cash" checked style="display:none">
+            <i class="fas fa-money-bill-wave" style="display:block;font-size:18px;margin-bottom:4px;color:#16a34a"></i>Cash
+          </label>
+          <label class="pay-mode-btn">
+            <input type="radio" name="payment_mode" value="card" style="display:none">
+            <i class="fas fa-credit-card" style="display:block;font-size:18px;margin-bottom:4px;color:var(--royal)"></i>Card
+          </label>
+          <label class="pay-mode-btn">
+            <input type="radio" name="payment_mode" value="upi" style="display:none">
+            <i class="fas fa-mobile-screen" style="display:block;font-size:18px;margin-bottom:4px;color:#7C3AED"></i>UPI
+          </label>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width:100%;padding:13px;font-size:15px;font-weight:700;margin-top:8px">
+        <i class="fas fa-check-circle"></i> Record Payment
+      </button>
+    </form>
+  </div>
+
+  <!-- Info / Recent -->
+  <div style="display:flex;flex-direction:column;gap:20px">
+    <div class="form-panel" style="background:linear-gradient(135deg,var(--royal),#1e4d8c);color:white">
+      <div style="font-size:13px;opacity:.8;margin-bottom:6px">BILLING NOTE</div>
+      <div style="font-size:15px;font-weight:600;line-height:1.5">
+        All payment entries are logged to the Audit Trail automatically.<br><br>
+        For detailed billing with invoicing, integrate with a billing module or export audit logs.
+      </div>
+    </div>
+
+    <div class="form-panel">
+      <h3 style="font-family:'Playfair Display',serif;font-size:17px;color:var(--royal);margin-bottom:16px">
+        <i class="fas fa-clock-rotate-left" style="margin-right:8px"></i>Quick Stats
+      </h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div style="background:var(--ivory);border-radius:12px;padding:16px;text-align:center">
+          <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--royal)">{{ patients|length }}</div>
+          <div style="font-size:11px;color:var(--slate)">Total Patients</div>
+        </div>
+        <div style="background:#ECFDF5;border-radius:12px;padding:16px;text-align:center">
+          <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--emerald)">Cash</div>
+          <div style="font-size:11px;color:var(--slate)">Default Mode</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// Highlight selected payment mode
+document.querySelectorAll('.pay-mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.pay-mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+});
+// Default highlight
+document.querySelector('.pay-mode-btn').classList.add('active');
+</script>
+{% endblock %}

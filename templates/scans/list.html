@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}All Scans — MediVault{% endblock %}
+{% block page_title %}Medical Scans{% endblock %}
+{% block page_subtitle %}All encrypted medical imaging records{% endblock %}
+
+{% block sidebar_nav %}
+<div class="nav-section-label">Imaging</div>
+<a href="/dashboard"   class="nav-item"><i class="fas fa-gauge-high"></i> Dashboard</a>
+<a href="/scans"       class="nav-item active"><i class="fas fa-x-ray"></i> All Scans</a>
+<a href="/scans/upload" class="nav-item"><i class="fas fa-upload"></i> Upload Scan</a>
+<a href="/patients"    class="nav-item"><i class="fas fa-hospital-user"></i> Patients</a>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.search-bar {
+  display:flex; gap:12px; margin-bottom:20px; align-items:center;
+  background:var(--white); padding:16px 20px; border-radius:14px;
+  border:1px solid var(--platinum);
+}
+.search-bar input[type=text] {
+  flex:1; padding:9px 14px; border:1.5px solid var(--platinum); border-radius:10px;
+  background:var(--ivory); font-family:'DM Sans',sans-serif; font-size:13px;
+  color:var(--navy-text); outline:none;
+}
+.search-bar input[type=text]:focus { border-color:var(--royal); }
+.scans-wrap { background:var(--white); border-radius:16px; border:1px solid var(--platinum); overflow:hidden; }
+.scans-header { padding:18px 24px; border-bottom:1px solid var(--platinum); display:flex; align-items:center; justify-content:space-between; background:var(--ivory); }
+.scans-header h3 { font-family:'Playfair Display',serif; font-size:17px; font-weight:600; color:var(--royal); }
+.enc-badge { background:#EDE9FE; color:#6D28D9; padding:3px 10px; border-radius:100px; font-size:11px; font-weight:600; }
+.empty-state { text-align:center; padding:60px; color:var(--slate); }
+.empty-state i { font-size:40px; color:var(--platinum); margin-bottom:14px; display:block; }
+</style>
+{% endblock %}
+
+{% block content %}
+<form method="GET" class="search-bar">
+  <i class="fas fa-search" style="color:var(--slate);font-size:14px"></i>
+  <input type="text" name="q" value="{{ search }}" placeholder="Search by patient name or ID…"/>
+  <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-search"></i> Search</button>
+  {% if search %}
+  <a href="/scans" class="btn btn-outline btn-sm"><i class="fas fa-times"></i> Clear</a>
+  {% endif %}
+  <a href="/scans/upload" class="btn btn-gold btn-sm" style="margin-left:auto"><i class="fas fa-upload"></i> Upload Scan</a>
+</form>
+
+<div class="scans-wrap">
+  <div class="scans-header">
+    <h3><i class="fas fa-x-ray" style="color:var(--royal);margin-right:10px"></i>All Scans</h3>
+    <span style="font-size:13px;color:var(--slate)">
+      {{ scans.total }} scan{{ 's' if scans.total != 1 }}{% if search %} matching "{{ search }}"{% endif %}
+    </span>
+  </div>
+
+  {% if scans.items %}
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Patient</th>
+        <th>Scan Type</th>
+        <th>Body Part</th>
+        <th>Encryption</th>
+        <th>Uploaded</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in scans.items %}
+      <tr>
+        <td style="font-size:12px;color:var(--slate)">{{ s.id }}</td>
+        <td>
+          <strong>{{ s.patient.full_name }}</strong><br>
+          <small style="color:var(--slate)"><code style="font-size:11px">{{ s.patient.patient_id }}</code></small>
+        </td>
+        <td style="font-size:13px">{{ s.scan_type or '—' }}</td>
+        <td style="font-size:13px">{{ s.body_part or '—' }}</td>
+        <td>
+          {% if s.encrypted_path %}
+          <span class="enc-badge"><i class="fas fa-lock" style="font-size:10px"></i> Encrypted</span>
+          {% else %}
+          <span class="status-badge status-discharged">Pending</span>
+          {% endif %}
+        </td>
+        <td style="font-size:12px;color:var(--slate)">{{ s.uploaded_at.strftime('%d %b %Y, %H:%M') }}</td>
+        <td>
+          <a href="/scans/{{ s.id }}/view" class="btn btn-outline btn-sm" title="View Scan">
+            <i class="fas fa-eye"></i> View
+          </a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if scans.pages > 1 %}
+  <div style="padding:16px 24px;border-top:1px solid var(--platinum);display:flex;gap:8px;align-items:center">
+    {% if scans.has_prev %}
+    <a href="?page={{ scans.prev_num }}{% if search %}&q={{ search }}{% endif %}" class="btn btn-outline btn-sm"><i class="fas fa-chevron-left"></i></a>
+    {% endif %}
+    <span style="font-size:13px;color:var(--slate);padding:4px 8px">Page {{ scans.page }} of {{ scans.pages }}</span>
+    {% if scans.has_next %}
+    <a href="?page={{ scans.next_num }}{% if search %}&q={{ search }}{% endif %}" class="btn btn-outline btn-sm"><i class="fas fa-chevron-right"></i></a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="empty-state">
+    <i class="fas fa-x-ray"></i>
+    <h3 style="font-family:'Playfair Display',serif;color:var(--royal);margin-bottom:8px">
+      {% if search %}No scans found{% else %}No scans uploaded yet{% endif %}
+    </h3>
+    <p>
+      {% if search %}
+        No results for "{{ search }}". <a href="/scans">View all scans</a>
+      {% else %}
+        Upload a medical scan to get started.
+        <br><a href="/scans/upload" class="btn btn-gold btn-sm" style="margin-top:16px;display:inline-block"><i class="fas fa-upload"></i> Upload First Scan</a>
+      {% endif %}
+    </p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

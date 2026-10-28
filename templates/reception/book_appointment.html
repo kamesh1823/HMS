@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+{% block title %}Book Appointment — MediVault{% endblock %}
+{% block page_title %}Book Appointment{% endblock %}
+{% block page_subtitle %}Schedule a patient appointment from the front desk{% endblock %}
+
+{% block sidebar_nav %}
+<div class="nav-section-label">Front Desk</div>
+<a href="/dashboard"             class="nav-item"><i class="fas fa-gauge-high"></i> Dashboard</a>
+<a href="/patients/new"          class="nav-item"><i class="fas fa-user-plus"></i> Register Patient</a>
+<a href="/patients"              class="nav-item"><i class="fas fa-hospital-user"></i> Patient List</a>
+<div class="nav-section-label">Appointments</div>
+<a href="/appointments"          class="nav-item"><i class="fas fa-calendar-check"></i> All Appointments</a>
+<a href="/staff/book-appointment" class="nav-item active"><i class="fas fa-calendar-plus"></i> Book Appointment</a>
+<a href="/checkin"               class="nav-item"><i class="fas fa-door-open"></i> Patient Check-in</a>
+<div class="nav-section-label">Admin</div>
+<a href="/billing"               class="nav-item"><i class="fas fa-receipt"></i> Billing</a>
+<a href="/reports/upload"        class="nav-item"><i class="fas fa-file-arrow-up"></i> Upload Report</a>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.appt-form { background:var(--white); border-radius:20px; padding:32px; border:1px solid var(--platinum); max-width:700px; }
+.form-group { margin-bottom:18px; }
+.form-label { display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--royal); margin-bottom:8px; }
+.form-control {
+  width:100%; padding:12px 16px; border:1.5px solid var(--platinum); border-radius:10px;
+  font-family:'DM Sans',sans-serif; font-size:14px; color:var(--navy-text);
+  background:var(--ivory); outline:none; box-sizing:border-box; transition:border .2s;
+}
+.form-control:focus { border-color:var(--royal); background:white; }
+.type-toggle { display:flex; gap:0; border:1.5px solid var(--platinum); border-radius:10px; overflow:hidden; margin-bottom:20px; }
+.type-btn { flex:1; padding:11px; text-align:center; cursor:pointer; font-size:13px; font-weight:600; border:none; background:var(--ivory); color:var(--slate); transition:all .2s; }
+.type-btn.active { background:var(--royal); color:white; }
+.section-divider { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--slate); margin:20px 0 14px; padding-bottom:8px; border-bottom:1px solid var(--platinum); }
+
+/* Patient search autocomplete */
+.pt-search-wrap { position:relative; }
+.pt-dropdown {
+  position:absolute; top:calc(100% + 6px); left:0; right:0; z-index:9999;
+  background:#FFFFFF; border:2.5px solid var(--royal); border-radius:12px;
+  box-shadow:0 16px 48px rgba(27,58,107,0.25); display:none; max-height:280px; overflow-y:auto;
+}
+.pt-dropdown.open { display:block; }
+.pt-item {
+  padding:13px 16px; cursor:pointer; display:flex; align-items:center; gap:12px;
+  border-bottom:1px solid var(--platinum); transition:background .15s; background:#FFFFFF;
+}
+.pt-item:last-child { border-bottom:none; }
+.pt-item:hover { background:#EEF2FF; }
+.pt-avatar {
+  width:38px; height:38px; border-radius:9px; flex-shrink:0;
+  background:linear-gradient(135deg,var(--royal),var(--teal));
+  display:flex; align-items:center; justify-content:center; color:white; font-weight:700; font-size:15px;
+}
+.pt-name { font-size:14px; font-weight:700; color:#0D1B2A; }
+.pt-meta { font-size:11px; color:#6B7280; margin-top:2px; }
+.autofill-badge { background:#ECFDF5; border:1.5px solid var(--emerald); border-radius:10px; padding:10px 14px; font-size:13px; color:var(--emerald); font-weight:600; display:none; margin-bottom:14px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="appt-form">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px">
+    <div style="width:44px;height:44px;border-radius:12px;background:#EEF2FF;color:var(--royal);display:flex;align-items:center;justify-content:center;font-size:18px">
+      <i class="fas fa-calendar-plus"></i>
+    </div>
+    <div>
+      <div style="font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--royal)">Book Appointment</div>
+      <div style="font-size:13px;color:var(--slate)">Staff-booked appointments are auto-confirmed</div>
+    </div>
+  </div>
+
+  <form method="POST" action="/staff/book-appointment">
+
+    <!-- Patient Type Toggle -->
+    <div class="section-divider">Patient Type</div>
+    <div class="type-toggle">
+      <button type="button" class="type-btn active" id="btn-existing" onclick="switchType('existing')">
+        <i class="fas fa-rotate"></i> Existing Patient
+      </button>
+      <button type="button" class="type-btn" id="btn-new" onclick="switchType('new')">
+        <i class="fas fa-user-plus"></i> New Patient
+      </button>
+    </div>
+    <input type="hidden" name="patient_type" id="patient_type" value="existing">
+
+    <!-- EXISTING PATIENT: search + autofill -->
+    <div id="existing-fields">
+      <div class="section-divider">Search Registered Patient</div>
+      <div class="autofill-badge" id="autofill-badge">
+        <i class="fas fa-circle-check"></i> Patient details auto-filled from records
+      </div>
+      <div class="form-group pt-search-wrap">
+        <label class="form-label"><i class="fas fa-search"></i> Search by Name or Patient ID</label>
+        <input type="text" id="pt-search" autocomplete="off" class="form-control"
+          placeholder="Type name or MV-YYYY-XXXX to search…"
+          style="border:2px solid var(--royal);box-shadow:0 0 0 3px rgba(27,58,107,0.1)">
+        <div class="pt-dropdown" id="pt-dropdown"></div>
+      </div>
+      <input type="hidden" name="patient_id_ref" id="patient_id_ref">
+    </div>
+
+    <!-- New patient fields -->
+    <div id="new-fields" style="display:none">
+      <div class="form-group">
+        <label class="form-label"><i class="fas fa-calendar"></i> Date of Birth</label>
+        <input type="date" name="date_of_birth" class="form-control">
+      </div>
+    </div>
+
+    <div class="section-divider">Patient Details</div>
+
+    <div class="form-group">
+      <label class="form-label"><i class="fas fa-user"></i> Full Name *</label>
+      <input type="text" name="patient_name" id="field-name" class="form-control" placeholder="Patient's full name" required>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <div class="form-group">
+        <label class="form-label"><i class="fas fa-phone"></i> Phone *</label>
+        <input type="tel" name="phone" id="field-phone" class="form-control" placeholder="10-digit number" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label"><i class="fas fa-envelope"></i> Email</label>
+        <input type="email" name="email" id="field-email" class="form-control" placeholder="Optional">
+      </div>
+    </div>
+
+    <div class="section-divider">Appointment Details</div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <div class="form-group">
+        <label class="form-label"><i class="fas fa-user-doctor"></i> Assign Doctor</label>
+        <select name="preferred_doctor" class="form-control">
+          <option value="">— Any available —</option>
+          {% for d in doctors %}
+          <option value="{{ d.id }}" data-name="Dr. {{ d.full_name }}">Dr. {{ d.full_name }} — {{ d.department or 'General' }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label"><i class="fas fa-calendar-day"></i> Appointment Date *</label>
+        <input type="date" name="appointment_date" class="form-control" required min="{{ today }}">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label"><i class="fas fa-comment-medical"></i> Reason for Visit</label>
+      <textarea name="reason" class="form-control" rows="3" placeholder="Briefly describe the reason for the appointment…"></textarea>
+    </div>
+
+    <div style="display:flex;gap:12px;margin-top:8px">
+      <button type="submit" class="btn btn-primary" style="flex:1;padding:13px;font-size:15px;font-weight:700">
+        <i class="fas fa-calendar-check"></i> Confirm Appointment
+      </button>
+      <a href="/appointments" class="btn btn-outline" style="padding:13px 20px;font-weight:600">Cancel</a>
+    </div>
+  </form>
+</div>
+
+<script>
+function switchType(type) {
+  document.getElementById('patient_type').value = type;
+  document.getElementById('existing-fields').style.display = type === 'existing' ? 'block' : 'none';
+  document.getElementById('new-fields').style.display      = type === 'new'      ? 'block' : 'none';
+  document.getElementById('btn-existing').classList.toggle('active', type === 'existing');
+  document.getElementById('btn-new').classList.toggle('active', type === 'new');
+  // Clear autofill when switching
+  clearAutofill();
+}
+
+function clearAutofill() {
+  document.getElementById('pt-search').value = '';
+  document.getElementById('patient_id_ref').value = '';
+  document.getElementById('autofill-badge').style.display = 'none';
+}
+
+// ── Patient search & autofill ──────────────────────────────────────
+const searchEl   = document.getElementById('pt-search');
+const dropdown   = document.getElementById('pt-dropdown');
+let searchTimer  = null;
+
+searchEl?.addEventListener('input', () => {
+  clearTimeout(searchTimer);
+  const q = searchEl.value.trim();
+  if (q.length < 2) { dropdown.classList.remove('open'); return; }
+  searchTimer = setTimeout(() => fetchPatients(q), 250);
+});
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('.pt-search-wrap')) dropdown.classList.remove('open');
+});
+
+async function fetchPatients(q) {
+  try {
+    const res = await fetch(`/patients/search?q=${encodeURIComponent(q)}`);
+    const data = await res.json();
+    if (!data.length) {
+      dropdown.innerHTML = '<div class="pt-item" style="color:var(--slate);justify-content:center">No patients found</div>';
+    } else {
+      dropdown.innerHTML = data.map(p => `
+        <div class="pt-item" onclick="selectPatient(${JSON.stringify(p).replace(/"/g,'&quot;')})">
+          <div class="pt-avatar">${p.full_name[0]}</div>
+          <div>
+            <div class="pt-name">${p.full_name}</div>
+            <div class="pt-meta">${p.patient_id} &nbsp;·&nbsp; DOB: ${p.dob} &nbsp;·&nbsp; 📞 ${p.phone || '—'}</div>
+          </div>
+        </div>`).join('');
+    }
+    dropdown.classList.add('open');
+  } catch(e) { console.error(e); }
+}
+
+function selectPatient(p) {
+  dropdown.classList.remove('open');
+  searchEl.value = `${p.full_name} (${p.patient_id})`;
+  document.getElementById('patient_id_ref').value = p.patient_id;
+  document.getElementById('field-name').value  = p.full_name;
+  document.getElementById('field-phone').value = p.phone || '';
+  document.getElementById('autofill-badge').style.display = 'block';
+}
+</script>
+{% endblock %}
